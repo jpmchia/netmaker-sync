@@ -33,6 +33,41 @@ NetmakerSync can sync and version the following Netmaker resources:
 
 ## Installation
 
+### Using Docker (Recommended)
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/jpmchia/netmaker-sync.git
+   cd netmaker-sync
+   ```
+
+2. Create a `.env` file based on the example:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Edit the `.env` file with your configuration details:
+   ```bash
+   # Update these values with your Netmaker API details
+   NETMAKER_API_URL=https://api.netmaker.example.com
+   NETMAKER_API_KEY=your_api_key_here
+   
+   # Update database credentials if needed
+   DB_USER=postgres
+   DB_PASSWORD=postgres
+   DB_NAME=netmaker_sync
+   ```
+
+4. Start the application with Docker Compose:
+   ```bash
+   docker-compose up -d
+   ```
+
+5. Check the logs to verify everything is working:
+   ```bash
+   docker-compose logs -f
+   ```
+
 ### From Source
 
 1. Clone the repository:
@@ -53,13 +88,40 @@ NetmakerSync can sync and version the following Netmaker resources:
 
 ## Configuration
 
-NetmakerSync uses a configuration file to specify connection details for the Netmaker API and PostgreSQL database. Create a `config.yaml` file in the same directory as the binary:
+NetmakerSync can be configured using environment variables (recommended) or a configuration file.
+
+### Environment Variables (Recommended)
+
+Create a `.env` file in the root directory with the following variables:
+
+```bash
+# Netmaker API Configuration
+NETMAKER_API_URL=https://api.netmaker.example.com
+NETMAKER_API_KEY=your_api_key_here
+
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=netmaker_sync
+DB_USER=postgres
+DB_PASSWORD=postgres
+
+# Sync Configuration
+SYNC_INTERVAL=5m  # Valid time units are "s", "m", "h"
+
+# API Server Configuration
+API_PORT=8080
+API_HOST=0.0.0.0
+```
+
+### Configuration File (Alternative)
+
+Alternatively, you can create a `config.yaml` file in the same directory as the binary:
 
 ```yaml
 netmaker_api:
   base_url: "https://your-netmaker-server.com/api"
-  username: "your-username"
-  password: "your-password"
+  api_key: "your-api-key-here"
 
 database:
   host: "localhost"

@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: netmaker-sync
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8080}:8080"
+    environment:
+      - NETMAKER_API_URL=${NETMAKER_API_URL}
+      - NETMAKER_API_KEY=${NETMAKER_API_KEY}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-netmaker_sync}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - SYNC_INTERVAL=${SYNC_INTERVAL:-5m}
+      - API_PORT=8080
+      - API_HOST=0.0.0.0
+    depends_on:
+      - db
+    volumes:
+      - ./.env:/app/.env:ro
+    networks:
+      - netmaker-sync-network
+
+  db:
+    image: postgres:15-alpine
+    container_name: netmaker-sync-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+      - POSTGRES_DB=${DB_NAME:-netmaker_sync}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    networks:
+      - netmaker-sync-network
+
+networks:
+  netmaker-sync-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
