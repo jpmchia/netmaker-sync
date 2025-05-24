@@ -1,0 +1,4293 @@
+---
+swagger: "2.0"
+info:
+  description: "# API Usage\n\nMost actions that can be performed via API can be performed\
+    \ via UI. We recommend managing your networks using the official netmaker-ui project.\
+    \ However, Netmaker can also be run without the UI, and all functions can be achieved\
+    \ via API calls. If your use case requires using Netmaker without the UI or you\
+    \ need to do some troubleshooting/advanced configuration, using the API directly\
+    \ may help.\n\n# Authentication\n\nAPI calls must be authenticated via a header\
+    \ of the format -H “Authorization: Bearer <YOUR_SECRET_KEY>” There are two methods\
+    \ to obtain YOUR_SECRET_KEY: 1. Using the masterkey. By default, this value is\
+    \ “secret key,” but you should change this on your instance and keep it secure.\
+    \ This value can be set via env var at startup or in a config file (config/environments/<\
+    \ env >.yaml). See the [Netmaker](https://docs.netmaker.org/index.html) documentation\
+    \ for more details. 2. Using a JWT received for a node. This can be retrieved\
+    \ by calling the /api/nodes/<network>/authenticate endpoint, as documented below."
+  version: "0.24.0"
+  title: "Netmaker"
+host: "api.demo.netmaker.io"
+basePath: "/"
+schemes:
+- "https"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+paths:
+  /api/dns:
+    get:
+      tags:
+      - "dns"
+      summary: "Gets all DNS entries."
+      operationId: "getAllDNS"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: "Success"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DNSEntry"
+  /api/dns/{network}:
+    post:
+      tags:
+      - "dns"
+      summary: "Create a DNS entry."
+      operationId: "createDNS"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        description: "Network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - in: "body"
+        name: "body"
+        description: "DNS Entry"
+        required: false
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/DNSEntry"
+        x-go-name: "Body"
+        x-exportParamName: "Body"
+      responses:
+        "200":
+          description: "Success"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DNSEntry"
+  /api/dns/{network}/{domain}:
+    delete:
+      tags:
+      - "dns"
+      summary: "Delete a DNS entry."
+      operationId: "deleteDNS"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        description: "Network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - name: "domain"
+        in: "path"
+        description: "Domain"
+        required: true
+        type: "string"
+        x-go-name: "Domain"
+        x-exportParamName: "Domain"
+      responses:
+        "200":
+          description: ""
+  /api/dns/adm/{network}:
+    get:
+      tags:
+      - "dns"
+      summary: "Gets all DNS entries associated with the network."
+      operationId: "getDNS"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        description: "Network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      responses:
+        "200":
+          description: "Success"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DNSEntry"
+  /api/dns/adm/{network}/custom:
+    get:
+      tags:
+      - "dns"
+      summary: "Gets custom DNS entries associated with a network."
+      operationId: "getCustomDNS"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        description: "Network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      responses:
+        "200":
+          description: "Success"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DNSEntry"
+  /api/dns/adm/{network}/nodes:
+    get:
+      tags:
+      - "dns"
+      summary: "Gets node DNS entries associated with a network."
+      operationId: "getNodeDNS"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        description: "Network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      responses:
+        "200":
+          description: "Success"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DNSEntry"
+  /api/dns/adm/pushdns:
+    post:
+      tags:
+      - "dns"
+      summary: "Push DNS entries to nameserver."
+      operationId: "pushDNS"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: "Success"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DNSEntry"
+  /api/emqx/hosts:
+    delete:
+      tags:
+      - "hosts"
+      summary: "Lists all hosts."
+      operationId: "delEmqxHosts"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/ApiHost"
+  /api/extclients:
+    get:
+      tags:
+      - "ext_client"
+      summary: "A separate function to get all extclients, not just extclients for\
+        \ a particular network."
+      operationId: "getAllExtClients"
+      schemes:
+      - "https"
+      parameters:
+      - in: "body"
+        name: "networks"
+        description: "Networks"
+        required: false
+        schema:
+          type: "array"
+          items:
+            type: "string"
+        x-go-name: "Networks"
+        x-exportParamName: "Networks"
+        x-optionalDataType: "[]string"
+      responses:
+        "200":
+          description: ""
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ExtClient"
+  /api/extclients/{network}:
+    get:
+      tags:
+      - "ext_client"
+      summary: "Get all extclients associated with network."
+      description: "Gets all extclients associated with network, including pending\
+        \ extclients."
+      operationId: "getNetworkExtClients"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        description: "Network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      responses:
+        "200":
+          description: ""
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ExtClient"
+  /api/extclients/{network}/{clientid}:
+    get:
+      tags:
+      - "ext_client"
+      summary: "Get an individual extclient."
+      operationId: "getExtClient"
+      schemes:
+      - "https"
+      parameters:
+      - name: "clientid"
+        in: "path"
+        description: "Client ID"
+        required: true
+        type: "string"
+        x-go-name: "ClientID"
+        x-exportParamName: "Clientid"
+      - name: "network"
+        in: "path"
+        description: "Network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/ExtClient"
+    put:
+      tags:
+      - "ext_client"
+      summary: "Update an individual extclient."
+      operationId: "updateExtClient"
+      schemes:
+      - "https"
+      parameters:
+      - name: "clientid"
+        in: "path"
+        description: "Client ID"
+        required: true
+        type: "string"
+        x-go-name: "ClientID"
+        x-exportParamName: "Clientid"
+      - name: "network"
+        in: "path"
+        description: "Network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - in: "body"
+        name: "ext_client"
+        description: "ExtClient"
+        required: false
+        schema:
+          $ref: "#/definitions/ExtClient"
+        x-go-name: "ExtClient"
+        x-exportParamName: "ExtClient"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/ExtClient"
+    delete:
+      tags:
+      - "ext_client"
+      summary: "Delete an individual extclient."
+      operationId: "deleteExtClient"
+      schemes:
+      - "https"
+      parameters:
+      - name: "clientid"
+        in: "path"
+        description: "Client ID"
+        required: true
+        type: "string"
+        x-go-name: "ClientID"
+        x-exportParamName: "Clientid"
+      - name: "network"
+        in: "path"
+        description: "Network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/SuccessResponse"
+  /api/extclients/{network}/{clientid}/{type}:
+    get:
+      tags:
+      - "ext_client"
+      summary: "Get an individual extclient."
+      operationId: "getExtClientConf"
+      schemes:
+      - "https"
+      parameters:
+      - name: "type"
+        in: "path"
+        description: "Type"
+        required: true
+        type: "string"
+        x-go-name: "Type"
+        x-exportParamName: "Type_"
+      - name: "clientid"
+        in: "path"
+        description: "Client ID"
+        required: true
+        type: "string"
+        x-go-name: "ClientID"
+        x-exportParamName: "Clientid"
+      - name: "network"
+        in: "path"
+        description: "Network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/ExtClient"
+  /api/extclients/{network}/{nodeid}:
+    post:
+      tags:
+      - "ext_client"
+      summary: "Create an individual extclient.  Must have valid key and be unique."
+      operationId: "createExtClient"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        description: "Network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - name: "nodeid"
+        in: "path"
+        description: "Node ID"
+        required: true
+        type: "string"
+        x-go-name: "NodeID"
+        x-exportParamName: "Nodeid"
+      - in: "body"
+        name: "custom_ext_client"
+        description: "Custom ExtClient"
+        required: false
+        schema:
+          $ref: "#/definitions/CustomExtClient"
+        x-go-name: "CustomExtClient"
+        x-exportParamName: "CustomExtClient"
+      responses:
+        "200":
+          description: ""
+  /api/getip:
+    get:
+      tags:
+      - "ipservice"
+      summary: "Get the current public IP address."
+      operationId: "getPublicIP"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            type: "array"
+            items:
+              type: "integer"
+              format: "uint8"
+  /api/hosts:
+    get:
+      tags:
+      - "hosts"
+      summary: "Lists all hosts."
+      operationId: "getHosts"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ApiHost"
+  /api/hosts/{hostid}:
+    put:
+      tags:
+      - "hosts"
+      summary: "Updates a Netclient host on Netmaker server."
+      operationId: "updateHost"
+      schemes:
+      - "https"
+      parameters:
+      - name: "hostid"
+        in: "path"
+        description: "HostID"
+        required: true
+        type: "string"
+        x-go-name: "HostID"
+        x-exportParamName: "Hostid"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/ApiHost"
+    delete:
+      tags:
+      - "hosts"
+      summary: "Deletes a Netclient host from Netmaker server."
+      operationId: "deleteHost"
+      schemes:
+      - "https"
+      parameters:
+      - name: "hostid"
+        in: "path"
+        description: "HostID"
+        required: true
+        type: "string"
+        x-go-name: "HostID"
+        x-exportParamName: "Hostid"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/ApiHost"
+  /api/hosts/{hostid}/networks/{network}:
+    post:
+      tags:
+      - "hosts"
+      summary: "Given a network, a host is added to the network."
+      operationId: "addHostToNetwork"
+      schemes:
+      - "https"
+      parameters:
+      - name: "hostid"
+        in: "path"
+        description: "hostid to add or delete from network"
+        required: true
+        type: "string"
+        x-go-name: "HostID"
+        x-exportParamName: "Hostid"
+      - name: "network"
+        in: "path"
+        description: "network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      responses:
+        "200":
+          description: ""
+    delete:
+      tags:
+      - "hosts"
+      summary: "Given a network, a host is removed from the network."
+      operationId: "deleteHostFromNetwork"
+      schemes:
+      - "https"
+      parameters:
+      - name: "hostid"
+        in: "path"
+        description: "hostid to add or delete from network"
+        required: true
+        type: "string"
+        x-go-name: "HostID"
+        x-exportParamName: "Hostid"
+      - name: "network"
+        in: "path"
+        description: "network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      responses:
+        "200":
+          description: ""
+  /api/hosts/{hostid}/signalpeer:
+    post:
+      tags:
+      - "hosts"
+      summary: "send signal to peer."
+      operationId: "signalPeer"
+      schemes:
+      - "https"
+      parameters:
+      - name: "hostid"
+        in: "path"
+        description: "HostID"
+        required: true
+        type: "string"
+        x-go-name: "HostID"
+        x-exportParamName: "Hostid"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/Signal"
+  /api/hosts/{hostid}/sync:
+    post:
+      tags:
+      - "hosts"
+      summary: "Requests a host to pull."
+      operationId: "synchost"
+      schemes:
+      - "https"
+      parameters:
+      - name: "hostid"
+        in: "path"
+        description: "HostID"
+        required: true
+        type: "string"
+        x-go-name: "HostID"
+        x-exportParamName: "Hostid"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/Network"
+  /api/hosts/{hostid}keys:
+    post:
+      tags:
+      - "hosts"
+      summary: "Update keys for a network."
+      operationId: "updateKeys"
+      schemes:
+      - "https"
+      parameters:
+      - name: "hostid"
+        in: "path"
+        description: "HostID"
+        required: true
+        type: "string"
+        x-go-name: "HostID"
+        x-exportParamName: "Hostid"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/Network"
+  /api/hosts/adm/authenticate:
+    post:
+      tags:
+      - "authenticate"
+      summary: "Host based authentication for making further API calls."
+      operationId: "authenticateHost"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/SuccessResponse"
+  /api/hosts/keys:
+    post:
+      tags:
+      - "hosts"
+      summary: "Update keys for a network."
+      operationId: "updateAllKeys"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/Network"
+  /api/networks:
+    get:
+      tags:
+      - "networks"
+      summary: "Lists all networks."
+      operationId: "getNetworks"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Network"
+    post:
+      tags:
+      - "networks"
+      summary: "Create a network."
+      operationId: "createNetwork"
+      schemes:
+      - "https"
+      parameters:
+      - in: "body"
+        name: "network"
+        description: "Network"
+        required: false
+        schema:
+          $ref: "#/definitions/Network"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/Network"
+  /api/networks/{networkname}:
+    get:
+      tags:
+      - "networks"
+      summary: "Get a network."
+      operationId: "getNetwork"
+      schemes:
+      - "https"
+      parameters:
+      - name: "networkname"
+        in: "path"
+        description: "name: network name"
+        required: true
+        type: "string"
+        x-go-name: "Networkname"
+        x-exportParamName: "Networkname"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/Network"
+    put:
+      tags:
+      - "networks"
+      summary: "Update pro settings for a network."
+      operationId: "updateNetwork"
+      schemes:
+      - "https"
+      parameters:
+      - name: "networkname"
+        in: "path"
+        description: "name: network name"
+        required: true
+        type: "string"
+        x-go-name: "Networkname"
+        x-exportParamName: "Networkname"
+      - in: "body"
+        name: "network"
+        description: "Network"
+        required: false
+        schema:
+          $ref: "#/definitions/Network"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/Network"
+    delete:
+      tags:
+      - "networks"
+      summary: "Delete a network.  Will not delete if there are any nodes that belong\
+        \ to the network."
+      operationId: "deleteNetwork"
+      schemes:
+      - "https"
+      parameters:
+      - name: "networkname"
+        in: "path"
+        description: "name: network name"
+        required: true
+        type: "string"
+        x-go-name: "Networkname"
+        x-exportParamName: "Networkname"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/SuccessResponse"
+  /api/networks/{networkname}/acls:
+    get:
+      tags:
+      - "networks"
+      summary: "Get a network ACL (Access Control List)."
+      operationId: "getNetworkACL"
+      schemes:
+      - "https"
+      parameters:
+      - name: "networkname"
+        in: "path"
+        description: "name: network name"
+        required: true
+        type: "string"
+        x-go-name: "Networkname"
+        x-exportParamName: "Networkname"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/ACLContainer"
+    put:
+      tags:
+      - "networks"
+      summary: "Update a network ACL (Access Control List)."
+      operationId: "updateNetworkACL"
+      schemes:
+      - "https"
+      parameters:
+      - name: "networkname"
+        in: "path"
+        description: "name: network name"
+        required: true
+        type: "string"
+        x-go-name: "Networkname"
+        x-exportParamName: "Networkname"
+      - in: "body"
+        name: "acl_container"
+        description: "ACL Container"
+        required: false
+        schema:
+          $ref: "#/definitions/ACLContainer"
+        x-go-name: "ACLContainer"
+        x-exportParamName: "AclContainer"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/ACLContainer"
+  /api/networks/{networkname}/acls/v2:
+    put:
+      tags:
+      - "networks"
+      summary: "Update a network ACL (Access Control List)."
+      operationId: "updateNetworkACL"
+      schemes:
+      - "https"
+      parameters:
+      - name: "networkname"
+        in: "path"
+        description: "name: network name"
+        required: true
+        type: "string"
+        x-go-name: "Networkname"
+        x-exportParamName: "Networkname"
+      - in: "body"
+        name: "acl_container"
+        description: "ACL Container"
+        required: false
+        schema:
+          $ref: "#/definitions/ACLContainer"
+        x-go-name: "ACLContainer"
+        x-exportParamName: "AclContainer"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/ACLContainer"
+  /api/node/{nodeid}/failOverME:
+    post:
+      tags:
+      - "node"
+      summary: "Create a relay."
+      operationId: "failOver_me"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+  /api/nodes:
+    get:
+      tags:
+      - "nodes"
+      summary: "Get all nodes across all networks."
+      operationId: "getAllNodes"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ApiNode"
+  /api/nodes/{network}:
+    get:
+      tags:
+      - "nodes"
+      summary: "Gets all nodes associated with network including pending nodes."
+      operationId: "getNetworkNodes"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        description: "Network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      responses:
+        "200":
+          description: ""
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ApiNode"
+  /api/nodes/{network}/{nodeid}:
+    get:
+      tags:
+      - "nodes"
+      summary: "Get an individual node."
+      operationId: "getNode"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - name: "nodeid"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "NodeID"
+        x-exportParamName: "Nodeid"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+    put:
+      tags:
+      - "nodes"
+      summary: "Update an individual node."
+      operationId: "updateNode"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - name: "nodeid"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "NodeID"
+        x-exportParamName: "Nodeid"
+      - in: "body"
+        name: "node"
+        description: "Node"
+        required: false
+        schema:
+          $ref: "#/definitions/LegacyNode"
+        x-go-name: "Node"
+        x-exportParamName: "Node"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+    delete:
+      tags:
+      - "nodes"
+      summary: "Delete an individual node."
+      operationId: "deleteNode"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - name: "nodeid"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "NodeID"
+        x-exportParamName: "Nodeid"
+      - in: "body"
+        name: "node"
+        description: "Node"
+        required: false
+        schema:
+          $ref: "#/definitions/LegacyNode"
+        x-go-name: "Node"
+        x-exportParamName: "Node"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+  /api/nodes/{network}/{nodeid}/creategateway:
+    post:
+      tags:
+      - "nodes"
+      summary: "Create an egress gateway."
+      operationId: "createEgressGateway"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - name: "nodeid"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "NodeID"
+        x-exportParamName: "Nodeid"
+      - in: "body"
+        name: "egress_gateway_request"
+        description: "Egress Gateway Request"
+        required: false
+        schema:
+          $ref: "#/definitions/EgressGatewayRequest"
+        x-go-name: "EgressGatewayRequest"
+        x-exportParamName: "EgressGatewayRequest"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+  /api/nodes/{network}/{nodeid}/createingress:
+    post:
+      tags:
+      - "nodes"
+      summary: "Create an ingress gateway."
+      operationId: "createIngressGateway"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - name: "nodeid"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "NodeID"
+        x-exportParamName: "Nodeid"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+  /api/nodes/{network}/{nodeid}/createrelay:
+    post:
+      tags:
+      - "nodes"
+      summary: "Create a relay."
+      operationId: "createRelay"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - name: "nodeid"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "NodeID"
+        x-exportParamName: "Nodeid"
+      - in: "body"
+        name: "relay_request"
+        description: "Relay Request"
+        required: false
+        schema:
+          $ref: "#/definitions/RelayRequest"
+        x-go-name: "RelayRequest"
+        x-exportParamName: "RelayRequest"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+  /api/nodes/{network}/{nodeid}/deletegateway:
+    delete:
+      tags:
+      - "nodes"
+      summary: "Delete an egress gateway."
+      operationId: "deleteEgressGateway"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - name: "nodeid"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "NodeID"
+        x-exportParamName: "Nodeid"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+  /api/nodes/{network}/{nodeid}/deleteingress:
+    delete:
+      tags:
+      - "nodes"
+      summary: "Delete an ingress gateway."
+      operationId: "deleteIngressGateway"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - name: "nodeid"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "NodeID"
+        x-exportParamName: "Nodeid"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+  /api/nodes/{network}/{nodeid}/deleterelay:
+    delete:
+      tags:
+      - "nodes"
+      summary: "Remove a relay."
+      operationId: "deleteRelay"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - name: "nodeid"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "NodeID"
+        x-exportParamName: "Nodeid"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+  /api/nodes/{network}/{nodeid}/inet_gw:
+    post:
+      tags:
+      - "nodes"
+      summary: "Create an inet node."
+      operationId: "createInternetGw"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+    put:
+      tags:
+      - "nodes"
+      summary: "update an inet node."
+      operationId: "updateInternetGw"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+    delete:
+      tags:
+      - "nodes"
+      summary: "Delete an internet gw."
+      operationId: "deleteInternetGw"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+  /api/nodes/{network}/{nodeid}/ingress/users:
+    get:
+      tags:
+      - "users"
+      summary: "Lists all the users attached to an ingress gateway."
+      operationId: "ingressGatewayUsers"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - name: "nodeid"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "NodeID"
+        x-exportParamName: "Nodeid"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+  /api/nodes/adm/{network}/authenticate:
+    post:
+      tags:
+      - "authenticate"
+      summary: "Authenticate to make further API calls related to a network."
+      operationId: "authenticate"
+      schemes:
+      - "https"
+      parameters:
+      - name: "network"
+        in: "path"
+        description: "network"
+        required: true
+        type: "string"
+        x-go-name: "Network"
+        x-exportParamName: "Network"
+      - in: "body"
+        name: "auth_params"
+        description: "AuthParams"
+        required: false
+        schema:
+          $ref: "#/definitions/AuthParams"
+        x-go-name: "AuthParams"
+        x-exportParamName: "AuthParams"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/SuccessResponse"
+  /api/oauth/login:
+    get:
+      tags:
+      - "nodes"
+      summary: "Handles OAuth login."
+      operationId: "HandleAuthLogin"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+  /api/server/getconfig:
+    get:
+      tags:
+      - "server"
+      summary: "Get the server configuration."
+      operationId: "getConfig"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/ServerConfig"
+  /api/server/getserverinfo:
+    get:
+      tags:
+      - "server"
+      summary: "Get the server configuration."
+      operationId: "getServerInfo"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/ServerConfig"
+  /api/server/status:
+    get:
+      tags:
+      - "server"
+      summary: "Get the server configuration."
+      operationId: "getStatus"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/ServerConfig"
+  /api/users:
+    get:
+      tags:
+      - "user"
+      summary: "Get all users."
+      operationId: "getUsers"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/User"
+  /api/users/{username}:
+    get:
+      tags:
+      - "user"
+      summary: "Get an individual user."
+      operationId: "getUser"
+      schemes:
+      - "https"
+      parameters:
+      - name: "username"
+        in: "path"
+        description: "Username"
+        required: true
+        type: "string"
+        x-go-name: "Username"
+        x-exportParamName: "Username"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/User"
+    post:
+      tags:
+      - "user"
+      summary: "Create a user."
+      operationId: "createUser"
+      schemes:
+      - "https"
+      parameters:
+      - in: "body"
+        name: "user"
+        description: "User"
+        required: false
+        schema:
+          $ref: "#/definitions/User"
+        x-go-name: "User"
+        x-exportParamName: "User"
+      - name: "username"
+        in: "path"
+        description: "Username"
+        required: true
+        type: "string"
+        x-go-name: "Username"
+        x-exportParamName: "Username"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/User"
+    put:
+      tags:
+      - "user"
+      summary: "Update a user."
+      operationId: "updateUser"
+      schemes:
+      - "https"
+      parameters:
+      - in: "body"
+        name: "user"
+        description: "User"
+        required: false
+        schema:
+          $ref: "#/definitions/User"
+        x-go-name: "User"
+        x-exportParamName: "User"
+      - name: "username"
+        in: "path"
+        description: "Username"
+        required: true
+        type: "string"
+        x-go-name: "Username"
+        x-exportParamName: "Username"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/User"
+    delete:
+      tags:
+      - "user"
+      summary: "Delete a user."
+      operationId: "deleteUser"
+      schemes:
+      - "https"
+      parameters:
+      - name: "username"
+        in: "path"
+        description: "Username"
+        required: true
+        type: "string"
+        x-go-name: "Username"
+        x-exportParamName: "Username"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/User"
+  /api/users/{username}/remote_access_gw:
+    post:
+      tags:
+      - "user"
+      summary: "Attach User to a remote access gateway."
+      operationId: "attachUserToRemoteAccessGateway"
+      schemes:
+      - "https"
+      parameters:
+      - name: "username"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "Username"
+        x-exportParamName: "Username"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/User"
+    delete:
+      tags:
+      - "user"
+      summary: "Delete User from a remote access gateway."
+      operationId: "removeUserFromRemoteAccessGW"
+      schemes:
+      - "https"
+      parameters:
+      - name: "username"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "Username"
+        x-exportParamName: "Username"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/User"
+  /api/users/adm/authenticate:
+    post:
+      tags:
+      - "authenticate"
+      summary: "User authenticates using its password and retrieves a JWT for authorization."
+      operationId: "authenticateUser"
+      schemes:
+      - "https"
+      parameters:
+      - in: "body"
+        name: "user_auth_params"
+        description: "User Auth Params"
+        required: false
+        schema:
+          $ref: "#/definitions/UserAuthParams"
+        x-go-name: "UserAuthParams"
+        x-exportParamName: "UserAuthParams"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/SuccessResponse"
+  /api/users/adm/createsuperadmin:
+    post:
+      tags:
+      - "user"
+      summary: "Make a user an admin."
+      operationId: "createAdmin"
+      schemes:
+      - "https"
+      parameters:
+      - in: "body"
+        name: "user"
+        description: "User"
+        required: false
+        schema:
+          $ref: "#/definitions/User"
+        x-go-name: "User"
+        x-exportParamName: "User"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/User"
+  /api/users/adm/hassuperadmin:
+    get:
+      tags:
+      - "user"
+      summary: "Checks whether the server has an admin."
+      operationId: "hasSuperAdmin"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+  /api/users/adm/transfersuperadmin:
+    post:
+      tags:
+      - "user"
+      summary: "Transfers superadmin role to an admin user."
+      operationId: "transferSuperAdmin"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/User"
+  /api/users_pending:
+    get:
+      tags:
+      - "user"
+      summary: "Get all pending users."
+      operationId: "getPendingUsers"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/User"
+  /api/users_pending/{username}/pending:
+    delete:
+      tags:
+      - "user"
+      summary: "delete all pending users."
+      operationId: "deleteAllPendingUsers"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/User"
+  /api/users_pending/user/{username}:
+    post:
+      tags:
+      - "user"
+      summary: "approve pending user."
+      operationId: "approvePendingUser"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/User"
+    delete:
+      tags:
+      - "user"
+      summary: "delete pending user."
+      operationId: "deletePendingUser"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/User"
+  /api/v1/enrollment-keys:
+    get:
+      tags:
+      - "enrollmentKeys"
+      summary: "Lists all EnrollmentKeys for admins."
+      operationId: "getEnrollmentKeys"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/EnrollmentKey"
+    post:
+      tags:
+      - "enrollmentKeys"
+      summary: "Creates an EnrollmentKey for hosts to use on Netmaker server."
+      operationId: "createEnrollmentKey"
+      schemes:
+      - "https"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "APIEnrollmentKey"
+        required: false
+        schema:
+          $ref: "#/definitions/APIEnrollmentKey"
+        x-go-name: "Body"
+        x-exportParamName: "Body"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/EnrollmentKey"
+  /api/v1/enrollment-keys/{keyid}:
+    put:
+      tags:
+      - "enrollmentKeys"
+      summary: "Updates an EnrollmentKey for hosts to use on Netmaker server. Updates\
+        \ only the relay to use."
+      operationId: "updateEnrollmentKey"
+      schemes:
+      - "https"
+      parameters:
+      - name: "keyid"
+        in: "path"
+        description: "KeyID"
+        required: true
+        type: "string"
+        x-go-name: "KeyID"
+        x-exportParamName: "Keyid"
+      - in: "body"
+        name: "body"
+        description: "APIEnrollmentKey"
+        required: false
+        schema:
+          $ref: "#/definitions/APIEnrollmentKey"
+        x-go-name: "Body"
+        x-exportParamName: "Body"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/EnrollmentKey"
+    delete:
+      tags:
+      - "enrollmentKeys"
+      summary: "Deletes an EnrollmentKey from Netmaker server."
+      operationId: "deleteEnrollmentKey"
+      schemes:
+      - "https"
+      parameters:
+      - name: "keyid"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "KeyID"
+        x-exportParamName: "Keyid"
+      responses:
+        "200":
+          description: ""
+  /api/v1/enrollment-keys/{token}:
+    post:
+      tags:
+      - "enrollmentKeys"
+      summary: "Handles a Netclient registration with server and add nodes accordingly."
+      operationId: "handleHostRegister"
+      schemes:
+      - "https"
+      parameters:
+      - name: "token"
+        in: "path"
+        required: true
+        type: "string"
+        x-go-name: "Token"
+        x-exportParamName: "Token"
+      - in: "body"
+        name: "host"
+        required: false
+        schema:
+          $ref: "#/definitions/Host"
+        x-go-name: "Host"
+        x-exportParamName: "Host"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/RegisterResponse"
+  /api/v1/fallback/host/{hostid}:
+    put:
+      tags:
+      - "hosts"
+      summary: "Updates a Netclient host on Netmaker server."
+      operationId: "hostUpdateFallback"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/ApiHost"
+  /api/v1/host:
+    get:
+      tags:
+      - "hosts"
+      description: "Used by clients for \"pull\" command"
+      operationId: "pullHost"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/HostPull"
+  /api/v1/legacy/nodes:
+    delete:
+      tags:
+      - "nodes"
+      summary: "Delete all legacy nodes from DB."
+      operationId: "wipeLegacyNodes"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/SuccessResponse"
+  /api/v1/node/failover:
+    post:
+      tags:
+      - "node"
+      summary: "Create a relay."
+      operationId: "createfailOver"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+    delete:
+      tags:
+      - "node"
+      summary: "Create a relay."
+      operationId: "deletefailOver"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/LegacyNode"
+  /api/v1/nodes/migrate:
+    put:
+      tags:
+      - "nodes"
+      summary: "Used to migrate a legacy node."
+      operationId: "migrateData"
+      schemes:
+      - "https"
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/HostPull"
+  /meshclient/files/{filename}:
+    get:
+      tags:
+      - "meshclient"
+      summary: "Retrieve a file from the file server."
+      operationId: "getFile"
+      schemes:
+      - "https"
+      parameters:
+      - name: "filename"
+        in: "path"
+        description: "Filename"
+        required: true
+        type: "string"
+        x-go-name: "Filename"
+        x-exportParamName: "Filename"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: "#/definitions/File"
+definitions:
+  ACL:
+    type: "object"
+    description: "ACL - the ACL of other nodes in a NetworkACL for a single unique\
+      \ node"
+    additionalProperties:
+      type: "integer"
+      format: "uint8"
+    x-go-package: "github.com/gravitl/netmaker/logic/acls"
+  ACLContainer:
+    type: "object"
+    description: "ACLContainer - the total list of all node's ACL in a given network"
+    additionalProperties:
+      $ref: "#/definitions/ACL"
+    x-go-package: "github.com/gravitl/netmaker/logic/acls"
+  APIEnrollmentKey:
+    type: "object"
+    properties:
+      expiration:
+        type: "integer"
+        format: "int64"
+        x-go-name: "Expiration"
+      networks:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "Networks"
+      relay:
+        type: "string"
+        x-go-name: "Relay"
+      tags:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "Tags"
+      type:
+        $ref: "#/definitions/KeyType"
+      unlimited:
+        type: "boolean"
+        x-go-name: "Unlimited"
+      uses_remaining:
+        type: "integer"
+        format: "int64"
+        x-go-name: "UsesRemaining"
+    description: "APIEnrollmentKey - used to create enrollment keys via API"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  ApiHost:
+    type: "object"
+    properties:
+      autoupdate:
+        type: "boolean"
+        x-go-name: "AutoUpdate"
+      debug:
+        type: "boolean"
+        x-go-name: "Debug"
+      defaultinterface:
+        type: "string"
+        x-go-name: "DefaultInterface"
+      endpointip:
+        type: "string"
+        x-go-name: "EndpointIP"
+      endpointipv6:
+        type: "string"
+        x-go-name: "EndpointIPv6"
+      firewallinuse:
+        type: "string"
+        x-go-name: "FirewallInUse"
+      id:
+        type: "string"
+        x-go-name: "ID"
+      interfaces:
+        type: "array"
+        items:
+          $ref: "#/definitions/ApiIface"
+        x-go-name: "Interfaces"
+      isdefault:
+        type: "boolean"
+        x-go-name: "IsDefault"
+      isstatic:
+        type: "boolean"
+        x-go-name: "IsStatic"
+      listenport:
+        type: "integer"
+        format: "int64"
+        x-go-name: "ListenPort"
+      macaddress:
+        type: "string"
+        x-go-name: "MacAddress"
+      mtu:
+        type: "integer"
+        format: "int64"
+        x-go-name: "MTU"
+      name:
+        type: "string"
+        x-go-name: "Name"
+      nat_type:
+        type: "string"
+        x-go-name: "NatType"
+      nodes:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "Nodes"
+      os:
+        type: "string"
+        x-go-name: "OS"
+      persistentkeepalive:
+        type: "integer"
+        format: "int64"
+        x-go-name: "PersistentKeepalive"
+      publickey:
+        type: "string"
+        x-go-name: "PublicKey"
+      verbosity:
+        type: "integer"
+        format: "int64"
+        x-go-name: "Verbosity"
+      version:
+        type: "string"
+        x-go-name: "Version"
+      wg_public_listen_port:
+        type: "integer"
+        format: "int64"
+        x-go-name: "WgPublicListenPort"
+    description: "ApiHost - the host struct for API usage"
+    example:
+      defaultinterface: "defaultinterface"
+      interfaces:
+      - addressString: "addressString"
+        name: "name"
+      - addressString: "addressString"
+        name: "name"
+      debug: true
+      os: "os"
+      persistentkeepalive: 1
+      publickey: "publickey"
+      endpointipv6: "endpointipv6"
+      endpointip: "endpointip"
+      listenport: 0
+      wg_public_listen_port: 5
+      isstatic: true
+      version: "version"
+      autoupdate: true
+      firewallinuse: "firewallinuse"
+      mtu: 6
+      nodes:
+      - "nodes"
+      - "nodes"
+      name: "name"
+      nat_type: "nat_type"
+      macaddress: "macaddress"
+      id: "id"
+      isdefault: true
+      verbosity: 5
+    x-go-package: "github.com/gravitl/netmaker/models"
+  ApiIface:
+    type: "object"
+    properties:
+      addressString:
+        type: "string"
+        x-go-name: "AddressString"
+      name:
+        type: "string"
+        x-go-name: "Name"
+    description: "ApiIface - the interface struct for API usage\nThe original Iface\
+      \ struct contains a net.Address, which does not get marshalled correctly"
+    example:
+      addressString: "addressString"
+      name: "name"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  ApiNode:
+    type: "object"
+    properties:
+      address:
+        type: "string"
+        x-go-name: "Address"
+      address6:
+        type: "string"
+        x-go-name: "Address6"
+      allowedips:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "AllowedIPs"
+      connected:
+        type: "boolean"
+        x-go-name: "Connected"
+      defaultacl:
+        type: "string"
+        description: "== PRO =="
+        x-go-name: "DefaultACL"
+      dnson:
+        type: "boolean"
+        x-go-name: "DNSOn"
+      egressgatewaynatenabled:
+        type: "boolean"
+        x-go-name: "EgressGatewayNatEnabled"
+      egressgatewayranges:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "EgressGatewayRanges"
+      expdatetime:
+        type: "integer"
+        format: "int64"
+        x-go-name: "ExpirationDateTime"
+      fail_over_peers:
+        type: "object"
+        additionalProperties:
+          type: "object"
+          properties: {}
+        x-go-name: "FailOverPeers"
+      failed_over_by:
+        type: "string"
+        format: "uuid"
+        x-go-name: "FailedOverBy"
+      hostid:
+        type: "string"
+        x-go-name: "HostID"
+      id:
+        type: "string"
+        x-go-name: "ID"
+      inet_node_req:
+        $ref: "#/definitions/InetNodeReq"
+      ingressdns:
+        type: "string"
+        x-go-name: "IngressDns"
+      internetgw_node_id:
+        type: "string"
+        x-go-name: "InternetGwID"
+      is_fail_over:
+        type: "boolean"
+        x-go-name: "IsFailOver"
+      isegressgateway:
+        type: "boolean"
+        x-go-name: "IsEgressGateway"
+      isingressgateway:
+        type: "boolean"
+        x-go-name: "IsIngressGateway"
+      isinternetgateway:
+        type: "boolean"
+        x-go-name: "IsInternetGateway"
+      isrelay:
+        type: "boolean"
+        x-go-name: "IsRelay"
+      isrelayed:
+        type: "boolean"
+        x-go-name: "IsRelayed"
+      lastcheckin:
+        type: "integer"
+        format: "int64"
+        x-go-name: "LastCheckIn"
+      lastmodified:
+        type: "integer"
+        format: "int64"
+        x-go-name: "LastModified"
+      lastpeerupdate:
+        type: "integer"
+        format: "int64"
+        x-go-name: "LastPeerUpdate"
+      localaddress:
+        type: "string"
+        x-go-name: "LocalAddress"
+      metadata:
+        type: "string"
+        x-go-name: "Metadata"
+      network:
+        type: "string"
+        x-go-name: "Network"
+      networkrange:
+        type: "string"
+        x-go-name: "NetworkRange"
+      networkrange6:
+        type: "string"
+        x-go-name: "NetworkRange6"
+      pendingdelete:
+        type: "boolean"
+        x-go-name: "PendingDelete"
+      relayedby:
+        type: "string"
+        x-go-name: "RelayedBy"
+      relaynodes:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "RelayedNodes"
+      server:
+        type: "string"
+        x-go-name: "Server"
+    description: "ApiNode is a stripped down Node DTO that exposes only required fields\
+      \ to external systems"
+    example:
+      server: "server"
+      metadata: "metadata"
+      inet_node_req:
+        inet_node_client_ids:
+        - "inet_node_client_ids"
+        - "inet_node_client_ids"
+      lastcheckin: 6
+      isrelay: true
+      relayedby: "relayedby"
+      hostid: "hostid"
+      isingressgateway: true
+      network: "network"
+      allowedips:
+      - "allowedips"
+      - "allowedips"
+      internetgw_node_id: "internetgw_node_id"
+      networkrange: "networkrange"
+      is_fail_over: true
+      address6: "address6"
+      expdatetime: 0
+      defaultacl: "defaultacl"
+      id: "id"
+      fail_over_peers:
+        key: "{}"
+      ingressdns: "ingressdns"
+      networkrange6: "networkrange6"
+      isinternetgateway: true
+      lastpeerupdate: 5
+      address: "address"
+      relaynodes:
+      - "relaynodes"
+      - "relaynodes"
+      localaddress: "localaddress"
+      connected: true
+      egressgatewayranges:
+      - "egressgatewayranges"
+      - "egressgatewayranges"
+      failed_over_by: "046b6c7f-0b8a-43b9-b35d-6489e6daee91"
+      lastmodified: 1
+      egressgatewaynatenabled: true
+      pendingdelete: true
+      dnson: true
+      isegressgateway: true
+      isrelayed: true
+    x-go-package: "github.com/gravitl/netmaker/models"
+  AuthParams:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        x-go-name: "ID"
+      macaddress:
+        type: "string"
+        x-go-name: "MacAddress"
+      password:
+        type: "string"
+        x-go-name: "Password"
+    description: "AuthParams - struct for auth params"
+    example:
+      password: "password"
+      macaddress: "macaddress"
+      id: "id"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  CustomExtClient:
+    type: "object"
+    properties:
+      clientid:
+        type: "string"
+        x-go-name: "ClientID"
+      deniednodeacls:
+        type: "object"
+        additionalProperties:
+          type: "object"
+          properties: {}
+        x-go-name: "DeniedACLs"
+      dns:
+        type: "string"
+        x-go-name: "DNS"
+      enabled:
+        type: "boolean"
+        x-go-name: "Enabled"
+      extraallowedips:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "ExtraAllowedIPs"
+      postdown:
+        type: "string"
+        x-go-name: "PostDown"
+      postup:
+        type: "string"
+        x-go-name: "PostUp"
+      publickey:
+        type: "string"
+        x-go-name: "PublicKey"
+      remote_access_client_id:
+        type: "string"
+        x-go-name: "RemoteAccessClientID"
+    description: "CustomExtClient - struct for CustomExtClient params"
+    example:
+      clientid: "clientid"
+      deniednodeacls:
+        key: "{}"
+      postdown: "postdown"
+      dns: "dns"
+      publickey: "publickey"
+      extraallowedips:
+      - "extraallowedips"
+      - "extraallowedips"
+      postup: "postup"
+      enabled: true
+      remote_access_client_id: "remote_access_client_id"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  DNSEntry:
+    type: "object"
+    properties:
+      address:
+        type: "string"
+        x-go-name: "Address"
+      address6:
+        type: "string"
+        x-go-name: "Address6"
+      name:
+        type: "string"
+        x-go-name: "Name"
+      network:
+        type: "string"
+        x-go-name: "Network"
+    description: "DNSEntry - a DNS entry represented as struct"
+    example:
+      address: "address"
+      name: "name"
+      address6: "address6"
+      network: "network"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  Duration:
+    type: "integer"
+    format: "int64"
+    description: "A Duration represents the elapsed time between two instants\nas\
+      \ an int64 nanosecond count. The representation limits the\nlargest representable\
+      \ duration to approximately 290 years."
+    x-go-package: "time"
+  EgressGatewayRequest:
+    type: "object"
+    properties:
+      natenabled:
+        type: "string"
+        x-go-name: "NatEnabled"
+      netid:
+        type: "string"
+        x-go-name: "NetID"
+      nodeid:
+        type: "string"
+        x-go-name: "NodeID"
+      ranges:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "Ranges"
+    description: "EgressGatewayRequest - egress gateway request"
+    example:
+      natenabled: "natenabled"
+      ranges:
+      - "ranges"
+      - "ranges"
+      netid: "netid"
+      nodeid: "nodeid"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  EgressInfo:
+    type: "object"
+    properties:
+      egress_gateway_cfg:
+        $ref: "#/definitions/EgressGatewayRequest"
+      egress_gw_addr:
+        $ref: "#/definitions/IPNet"
+      egress_id:
+        type: "string"
+        x-go-name: "EgressID"
+      network:
+        $ref: "#/definitions/IPNet"
+    description: "EgressInfo - struct for egress info"
+    example:
+      egress_gw_addr:
+        IP: "IP"
+        Mask: ""
+      egress_gateway_cfg:
+        natenabled: "natenabled"
+        ranges:
+        - "ranges"
+        - "ranges"
+        netid: "netid"
+        nodeid: "nodeid"
+      egress_id: "egress_id"
+      network:
+        IP: "IP"
+        Mask: ""
+    x-go-package: "github.com/gravitl/netmaker/models"
+  EgressNetworkRoutes:
+    type: "object"
+    properties:
+      egress_ranges:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "EgressRanges"
+      node_addr:
+        $ref: "#/definitions/IPNet"
+      node_addr6:
+        $ref: "#/definitions/IPNet"
+    description: "EgressNetworkRoutes - struct for egress network routes for adding\
+      \ routes to peer's interface"
+    example:
+      egress_ranges:
+      - "egress_ranges"
+      - "egress_ranges"
+      node_addr:
+        IP: "IP"
+        Mask: ""
+      node_addr6:
+        IP: "IP"
+        Mask: ""
+    x-go-package: "github.com/gravitl/netmaker/models"
+  EnrollmentKey:
+    type: "object"
+    properties:
+      expiration:
+        type: "string"
+        format: "date-time"
+        x-go-name: "Expiration"
+      networks:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "Networks"
+      relay:
+        type: "string"
+        format: "uuid"
+        x-go-name: "Relay"
+      tags:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "Tags"
+      token:
+        type: "string"
+        x-go-name: "Token"
+      type:
+        $ref: "#/definitions/KeyType"
+      unlimited:
+        type: "boolean"
+        x-go-name: "Unlimited"
+      uses_remaining:
+        type: "integer"
+        format: "int64"
+        x-go-name: "UsesRemaining"
+      value:
+        type: "string"
+        x-go-name: "Value"
+    description: "EnrollmentKey - the key used to register hosts and join them to\
+      \ specific networks"
+    example:
+      unlimited: true
+      uses_remaining: 0
+      relay: "046b6c7f-0b8a-43b9-b35d-6489e6daee91"
+      expiration: "2000-01-23T04:56:07.000+00:00"
+      networks:
+      - "networks"
+      - "networks"
+      type: {}
+      value: "value"
+      tags:
+      - "tags"
+      - "tags"
+      token: "token"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  ExtClient:
+    type: "object"
+    properties:
+      address:
+        type: "string"
+        x-go-name: "Address"
+      address6:
+        type: "string"
+        x-go-name: "Address6"
+      allowed_ips:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "AllowedIPs"
+      clientid:
+        type: "string"
+        x-go-name: "ClientID"
+      deniednodeacls:
+        type: "object"
+        additionalProperties:
+          type: "object"
+          properties: {}
+        x-go-name: "DeniedACLs"
+      dns:
+        type: "string"
+        x-go-name: "DNS"
+      enabled:
+        type: "boolean"
+        x-go-name: "Enabled"
+      extraallowedips:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "ExtraAllowedIPs"
+      ingressgatewayendpoint:
+        type: "string"
+        x-go-name: "IngressGatewayEndpoint"
+      ingressgatewayid:
+        type: "string"
+        x-go-name: "IngressGatewayID"
+      lastmodified:
+        type: "integer"
+        format: "int64"
+        x-go-name: "LastModified"
+      network:
+        type: "string"
+        x-go-name: "Network"
+      ownerid:
+        type: "string"
+        x-go-name: "OwnerID"
+      postdown:
+        type: "string"
+        x-go-name: "PostDown"
+      postup:
+        type: "string"
+        x-go-name: "PostUp"
+      privatekey:
+        type: "string"
+        x-go-name: "PrivateKey"
+      publickey:
+        type: "string"
+        x-go-name: "PublicKey"
+      remote_access_client_id:
+        type: "string"
+        x-go-name: "RemoteAccessClientID"
+    description: "ExtClient - struct for external clients"
+    example:
+      address: "address"
+      clientid: "clientid"
+      allowed_ips:
+      - "allowed_ips"
+      - "allowed_ips"
+      deniednodeacls:
+        key: "{}"
+      postdown: "postdown"
+      dns: "dns"
+      ingressgatewayid: "ingressgatewayid"
+      publickey: "publickey"
+      extraallowedips:
+      - "extraallowedips"
+      - "extraallowedips"
+      postup: "postup"
+      ownerid: "ownerid"
+      enabled: true
+      network: "network"
+      privatekey: "privatekey"
+      lastmodified: 0
+      ingressgatewayendpoint: "ingressgatewayendpoint"
+      address6: "address6"
+      remote_access_client_id: "remote_access_client_id"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  File:
+    type: "object"
+    title: "File represents an open file descriptor."
+    x-go-package: "os"
+  FwUpdate:
+    type: "object"
+    properties:
+      egress_info:
+        type: "object"
+        additionalProperties:
+          $ref: "#/definitions/EgressInfo"
+        x-go-name: "EgressInfo"
+      is_egress_gw:
+        type: "boolean"
+        x-go-name: "IsEgressGw"
+    description: "FwUpdate - struct for firewall updates"
+    example:
+      egress_info:
+        key:
+          egress_gw_addr:
+            IP: "IP"
+            Mask: ""
+          egress_gateway_cfg:
+            natenabled: "natenabled"
+            ranges:
+            - "ranges"
+            - "ranges"
+            netid: "netid"
+            nodeid: "nodeid"
+          egress_id: "egress_id"
+          network:
+            IP: "IP"
+            Mask: ""
+      is_egress_gw: true
+    x-go-package: "github.com/gravitl/netmaker/models"
+  HardwareAddr:
+    title: "A HardwareAddr represents a physical hardware address."
+    type: "array"
+    items:
+      type: "integer"
+      format: "uint8"
+    x-go-package: "net"
+  Host:
+    type: "object"
+    properties:
+      autoupdate:
+        type: "boolean"
+        x-go-name: "AutoUpdate"
+      daemoninstalled:
+        type: "boolean"
+        x-go-name: "DaemonInstalled"
+      debug:
+        type: "boolean"
+        x-go-name: "Debug"
+      defaultinterface:
+        type: "string"
+        x-go-name: "DefaultInterface"
+      endpointip:
+        type: "string"
+        x-go-name: "EndpointIP"
+      endpointipv6:
+        type: "string"
+        x-go-name: "EndpointIPv6"
+      firewallinuse:
+        type: "string"
+        x-go-name: "FirewallInUse"
+      hostpass:
+        type: "string"
+        x-go-name: "HostPass"
+      id:
+        type: "string"
+        format: "uuid"
+        x-go-name: "ID"
+      interface:
+        type: "string"
+        x-go-name: "Interface"
+      interfaces:
+        type: "array"
+        items:
+          $ref: "#/definitions/Iface"
+        x-go-name: "Interfaces"
+      ipforwarding:
+        type: "boolean"
+        x-go-name: "IPForwarding"
+      isdefault:
+        type: "boolean"
+        x-go-name: "IsDefault"
+      isdocker:
+        type: "boolean"
+        x-go-name: "IsDocker"
+      isk8s:
+        type: "boolean"
+        x-go-name: "IsK8S"
+      isstatic:
+        type: "boolean"
+        x-go-name: "IsStatic"
+      listenport:
+        type: "integer"
+        format: "int64"
+        x-go-name: "ListenPort"
+      macaddress:
+        $ref: "#/definitions/HardwareAddr"
+      mtu:
+        type: "integer"
+        format: "int64"
+        x-go-name: "MTU"
+      name:
+        type: "string"
+        x-go-name: "Name"
+      nat_type:
+        type: "string"
+        x-go-name: "NatType"
+      nodes:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "Nodes"
+      os:
+        type: "string"
+        x-go-name: "OS"
+      persistentkeepalive:
+        $ref: "#/definitions/Duration"
+      publickey:
+        $ref: "#/definitions/Key"
+      traffickeypublic:
+        type: "array"
+        items:
+          type: "integer"
+          format: "uint8"
+        x-go-name: "TrafficKeyPublic"
+      turn_endpoint:
+        type: "string"
+        x-go-name: "TurnEndpoint"
+      verbosity:
+        type: "integer"
+        format: "int64"
+        x-go-name: "Verbosity"
+      version:
+        type: "string"
+        x-go-name: "Version"
+      wg_public_listen_port:
+        type: "integer"
+        format: "int64"
+        x-go-name: "WgPublicListenPort"
+    description: "Host - represents a host on the network"
+    example:
+      isk8s: true
+      ipforwarding: true
+      endpointip: "endpointip"
+      wg_public_listen_port: 5
+      interface: "interface"
+      isstatic: true
+      autoupdate: true
+      macaddress: ""
+      hostpass: "hostpass"
+      id: "046b6c7f-0b8a-43b9-b35d-6489e6daee91"
+      isdefault: true
+      defaultinterface: "defaultinterface"
+      interfaces:
+      - address:
+          IP: "IP"
+          Mask: ""
+        addressString: "addressString"
+        name: "name"
+      - address:
+          IP: "IP"
+          Mask: ""
+        addressString: "addressString"
+        name: "name"
+      debug: true
+      traffickeypublic:
+      - 1
+      - 1
+      os: "os"
+      persistentkeepalive: {}
+      publickey: ""
+      endpointipv6: "endpointipv6"
+      listenport: 0
+      version: "version"
+      firewallinuse: "firewallinuse"
+      mtu: 6
+      daemoninstalled: true
+      nodes:
+      - "nodes"
+      - "nodes"
+      turn_endpoint: "turn_endpoint"
+      name: "name"
+      nat_type: "nat_type"
+      isdocker: true
+      verbosity: 5
+    x-go-package: "github.com/gravitl/netmaker/models"
+  HostInfoMap:
+    type: "object"
+    description: "HostInfoMap - map of host public keys to host networking info"
+    additionalProperties:
+      $ref: "#/definitions/HostNetworkInfo"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  HostNetworkInfo:
+    type: "object"
+    properties:
+      interfaces:
+        type: "array"
+        items:
+          $ref: "#/definitions/Iface"
+        x-go-name: "Interfaces"
+      is_static:
+        type: "boolean"
+        x-go-name: "IsStatic"
+      listen_port:
+        type: "integer"
+        format: "int64"
+        x-go-name: "ListenPort"
+    description: "HostNetworkInfo - holds info related to host networking (used for\
+      \ client side peer calculations)"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  HostPull:
+    type: "object"
+    properties:
+      change_default_gw:
+        type: "boolean"
+        x-go-name: "ChangeDefaultGw"
+      default_gw_ip:
+        type: "string"
+        x-go-name: "DefaultGwIp"
+      egress_network_routes:
+        type: "array"
+        items:
+          $ref: "#/definitions/EgressNetworkRoutes"
+        x-go-name: "EgressRoutes"
+      endpoint_detection:
+        type: "boolean"
+        x-go-name: "EndpointDetection"
+      fw_update:
+        $ref: "#/definitions/FwUpdate"
+      host:
+        $ref: "#/definitions/Host"
+      host_network_info:
+        $ref: "#/definitions/HostInfoMap"
+      is_inet_gw:
+        type: "boolean"
+        x-go-name: "IsInternetGw"
+      nodes:
+        type: "array"
+        items:
+          $ref: "#/definitions/Node"
+        x-go-name: "Nodes"
+      peer_ids:
+        $ref: "#/definitions/PeerMap"
+      peers:
+        type: "array"
+        items:
+          $ref: "#/definitions/PeerConfig"
+        x-go-name: "Peers"
+      server_config:
+        $ref: "#/definitions/ServerConfig"
+    description: "HostPull - response of a host's pull"
+    example:
+      endpoint_detection: true
+      is_inet_gw: true
+      nodes:
+      - server: "server"
+        ingressgatewayrange: "ingressgatewayrange"
+        metadata: "metadata"
+        inet_node_req:
+          inet_node_client_ids:
+          - "inet_node_client_ids"
+          - "inet_node_client_ids"
+        lastcheckin: "2000-01-23T04:56:07.000+00:00"
+        isrelay: true
+        relayedby: "relayedby"
+        hostid: "046b6c7f-0b8a-43b9-b35d-6489e6daee91"
+        isingressgateway: true
+        network: "network"
+        internetgw_node_id: "internetgw_node_id"
+        networkrange:
+          IP: "IP"
+          Mask: ""
+        is_fail_over: true
+        action: "action"
+        address6:
+          IP: "IP"
+          Mask: ""
+        expdatetime: "2000-01-23T04:56:07.000+00:00"
+        defaultacl: "defaultacl"
+        id: "046b6c7f-0b8a-43b9-b35d-6489e6daee91"
+        ingressgatewayrange6: "ingressgatewayrange6"
+        fail_over_peers:
+          key: "{}"
+        ingressdns: "ingressdns"
+        networkrange6:
+          IP: "IP"
+          Mask: ""
+        isinternetgateway: true
+        lastpeerupdate: "2000-01-23T04:56:07.000+00:00"
+        address:
+          IP: "IP"
+          Mask: ""
+        egressgatewayrequest:
+          natenabled: "natenabled"
+          ranges:
+          - "ranges"
+          - "ranges"
+          netid: "netid"
+          nodeid: "nodeid"
+        ownerid: "ownerid"
+        relaynodes:
+        - "relaynodes"
+        - "relaynodes"
+        localaddress:
+          IP: "IP"
+          Mask: ""
+        connected: true
+        egressgatewayranges:
+        - "egressgatewayranges"
+        - "egressgatewayranges"
+        failed_over_by: "046b6c7f-0b8a-43b9-b35d-6489e6daee91"
+        lastmodified: "2000-01-23T04:56:07.000+00:00"
+        egressgatewaynatenabled: true
+        pendingdelete: true
+        dnson: true
+        isegressgateway: true
+        isrelayed: true
+      - server: "server"
+        ingressgatewayrange: "ingressgatewayrange"
+        metadata: "metadata"
+        inet_node_req:
+          inet_node_client_ids:
+          - "inet_node_client_ids"
+          - "inet_node_client_ids"
+        lastcheckin: "2000-01-23T04:56:07.000+00:00"
+        isrelay: true
+        relayedby: "relayedby"
+        hostid: "046b6c7f-0b8a-43b9-b35d-6489e6daee91"
+        isingressgateway: true
+        network: "network"
+        internetgw_node_id: "internetgw_node_id"
+        networkrange:
+          IP: "IP"
+          Mask: ""
+        is_fail_over: true
+        action: "action"
+        address6:
+          IP: "IP"
+          Mask: ""
+        expdatetime: "2000-01-23T04:56:07.000+00:00"
+        defaultacl: "defaultacl"
+        id: "046b6c7f-0b8a-43b9-b35d-6489e6daee91"
+        ingressgatewayrange6: "ingressgatewayrange6"
+        fail_over_peers:
+          key: "{}"
+        ingressdns: "ingressdns"
+        networkrange6:
+          IP: "IP"
+          Mask: ""
+        isinternetgateway: true
+        lastpeerupdate: "2000-01-23T04:56:07.000+00:00"
+        address:
+          IP: "IP"
+          Mask: ""
+        egressgatewayrequest:
+          natenabled: "natenabled"
+          ranges:
+          - "ranges"
+          - "ranges"
+          netid: "netid"
+          nodeid: "nodeid"
+        ownerid: "ownerid"
+        relaynodes:
+        - "relaynodes"
+        - "relaynodes"
+        localaddress:
+          IP: "IP"
+          Mask: ""
+        connected: true
+        egressgatewayranges:
+        - "egressgatewayranges"
+        - "egressgatewayranges"
+        failed_over_by: "046b6c7f-0b8a-43b9-b35d-6489e6daee91"
+        lastmodified: "2000-01-23T04:56:07.000+00:00"
+        egressgatewaynatenabled: true
+        pendingdelete: true
+        dnson: true
+        isegressgateway: true
+        isrelayed: true
+      host_network_info: {}
+      default_gw_ip: "default_gw_ip"
+      fw_update:
+        egress_info:
+          key:
+            egress_gw_addr:
+              IP: "IP"
+              Mask: ""
+            egress_gateway_cfg:
+              natenabled: "natenabled"
+              ranges:
+              - "ranges"
+              - "ranges"
+              netid: "netid"
+              nodeid: "nodeid"
+            egress_id: "egress_id"
+            network:
+              IP: "IP"
+              Mask: ""
+        is_egress_gw: true
+      server_config:
+        Platform: "Platform"
+        Server: "Server"
+        CacheEnabled: "CacheEnabled"
+        NetworksLimit: 5
+        RestBackend: "RestBackend"
+        NetclientEndpointDetection: "NetclientEndpointDetection"
+        TurnPassword: "TurnPassword"
+        MQUserName: "MQUserName"
+        EgressesLimit: 0
+        Verbosity: 9
+        CoreDNSAddr: "CoreDNSAddr"
+        Version: "Version"
+        Database: "Database"
+        DisplayKeys: "DisplayKeys"
+        RacAutoDisable: true
+        UsersLimit: 7
+        OIDCIssuer: "OIDCIssuer"
+        MachinesLimit: 1
+        AllowedOrigin: "AllowedOrigin"
+        TurnApiServer: "TurnApiServer"
+        LicenseValue: "LicenseValue"
+        DNSMode: "DNSMode"
+        StunList: "StunList"
+        NetclientAutoUpdate: "NetclientAutoUpdate"
+        APIPort: "APIPort"
+        ClientID: "ClientID"
+        Environment: "Environment"
+        APIConnString: "APIConnString"
+        TurnServer: "TurnServer"
+        PublicIPService: "PublicIPService"
+        ServerBrokerEndpoint: "ServerBrokerEndpoint"
+        JwtValidityDuration: {}
+        MessageQueueBackend: "MessageQueueBackend"
+        IsEE: "IsEE"
+        EmqxRestEndpoint: "EmqxRestEndpoint"
+        HostNetwork: "HostNetwork"
+        FrontendURL: "FrontendURL"
+        NetmakerTenantID: "NetmakerTenantID"
+        endpoint_detection: true
+        AllowedEmailDomains: "AllowedEmailDomains"
+        TurnUserName: "TurnUserName"
+        StunPort: 5
+        DeployedByOperator: true
+        IngressesLimit: 6
+        SQLConn: "SQLConn"
+        NodeID: "NodeID"
+        APIHost: "APIHost"
+        MetricsExporter: "MetricsExporter"
+        BrokerType: "BrokerType"
+        UseTurn: true
+        Broker: "Broker"
+        TurnPort: 2
+        AuthProvider: "AuthProvider"
+        DisableRemoteIPCheck: "DisableRemoteIPCheck"
+        Telemetry: "Telemetry"
+        DNSKey: "DNSKey"
+        AzureTenant: "AzureTenant"
+        BasicAuth: "BasicAuth"
+        ClientSecret: "ClientSecret"
+        MasterKey: "MasterKey"
+        MQPassword: "MQPassword"
+      host:
+        isk8s: true
+        ipforwarding: true
+        endpointip: "endpointip"
+        wg_public_listen_port: 5
+        interface: "interface"
+        isstatic: true
+        autoupdate: true
+        macaddress: ""
+        hostpass: "hostpass"
+        id: "046b6c7f-0b8a-43b9-b35d-6489e6daee91"
+        isdefault: true
+        defaultinterface: "defaultinterface"
+        interfaces:
+        - address:
+            IP: "IP"
+            Mask: ""
+          addressString: "addressString"
+          name: "name"
+        - address:
+            IP: "IP"
+            Mask: ""
+          addressString: "addressString"
+          name: "name"
+        debug: true
+        traffickeypublic:
+        - 1
+        - 1
+        os: "os"
+        persistentkeepalive: {}
+        publickey: ""
+        endpointipv6: "endpointipv6"
+        listenport: 0
+        version: "version"
+        firewallinuse: "firewallinuse"
+        mtu: 6
+        daemoninstalled: true
+        nodes:
+        - "nodes"
+        - "nodes"
+        turn_endpoint: "turn_endpoint"
+        name: "name"
+        nat_type: "nat_type"
+        isdocker: true
+        verbosity: 5
+      peers:
+      - AllowedIPs:
+        - IP: "IP"
+          Mask: ""
+        - IP: "IP"
+          Mask: ""
+        Endpoint:
+          Zone: "Zone"
+          IP: "IP"
+          Port: 0
+        ReplaceAllowedIPs: true
+        PublicKey: ""
+        PersistentKeepaliveInterval: {}
+        PresharedKey: ""
+        UpdateOnly: true
+        Remove: true
+      - AllowedIPs:
+        - IP: "IP"
+          Mask: ""
+        - IP: "IP"
+          Mask: ""
+        Endpoint:
+          Zone: "Zone"
+          IP: "IP"
+          Port: 0
+        ReplaceAllowedIPs: true
+        PublicKey: ""
+        PersistentKeepaliveInterval: {}
+        PresharedKey: ""
+        UpdateOnly: true
+        Remove: true
+      egress_network_routes:
+      - egress_ranges:
+        - "egress_ranges"
+        - "egress_ranges"
+        node_addr:
+          IP: "IP"
+          Mask: ""
+        node_addr6:
+          IP: "IP"
+          Mask: ""
+      - egress_ranges:
+        - "egress_ranges"
+        - "egress_ranges"
+        node_addr:
+          IP: "IP"
+          Mask: ""
+        node_addr6:
+          IP: "IP"
+          Mask: ""
+      peer_ids: {}
+      change_default_gw: true
+    x-go-package: "github.com/gravitl/netmaker/models"
+  IDandAddr:
+    type: "object"
+    properties:
+      address:
+        type: "string"
+        x-go-name: "Address"
+      host_id:
+        type: "string"
+        x-go-name: "HostID"
+      id:
+        type: "string"
+        x-go-name: "ID"
+      is_extclient:
+        type: "boolean"
+        x-go-name: "IsExtClient"
+      isserver:
+        type: "string"
+        x-go-name: "IsServer"
+      listen_port:
+        type: "integer"
+        format: "int64"
+        x-go-name: "ListenPort"
+      name:
+        type: "string"
+        x-go-name: "Name"
+      network:
+        type: "string"
+        x-go-name: "Network"
+    description: "IDandAddr - struct to hold ID and primary Address"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  IPMask:
+    title: "An IPMask is a bitmask that can be used to manipulate\nIP addresses for\
+      \ IP addressing and routing."
+    type: "array"
+    description: "See type IPNet and func ParseCIDR for details."
+    items:
+      type: "integer"
+      format: "uint8"
+    x-go-package: "net"
+  IPNet:
+    type: "object"
+    properties:
+      IP:
+        type: "string"
+      Mask:
+        $ref: "#/definitions/IPMask"
+    title: "An IPNet represents an IP network."
+    example:
+      IP: "IP"
+      Mask: ""
+    x-go-package: "net"
+  Iface:
+    type: "object"
+    properties:
+      address:
+        $ref: "#/definitions/IPNet"
+      addressString:
+        type: "string"
+        x-go-name: "AddressString"
+      name:
+        type: "string"
+        x-go-name: "Name"
+    description: "Iface struct for local interfaces of a node"
+    example:
+      address:
+        IP: "IP"
+        Mask: ""
+      addressString: "addressString"
+      name: "name"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  InetNodeReq:
+    type: "object"
+    properties:
+      inet_node_client_ids:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "InetNodeClientIDs"
+    description: "InetNodeReq - exit node request struct"
+    example:
+      inet_node_client_ids:
+      - "inet_node_client_ids"
+      - "inet_node_client_ids"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  Key:
+    type: "array"
+    description: "A Key is a public, private, or pre-shared secret key.  The Key constructor\n\
+      functions in this package can be used to create Keys suitable for each of\n\
+      these applications."
+    items:
+      type: "integer"
+      format: "uint8"
+    x-go-package: "golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+  KeyType:
+    type: "integer"
+    format: "int64"
+    description: "KeyType - the type of enrollment key"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  LegacyNode:
+    type: "object"
+    properties:
+      accesskey:
+        type: "string"
+        x-go-name: "AccessKey"
+      action:
+        type: "string"
+        x-go-name: "Action"
+      address:
+        type: "string"
+        x-go-name: "Address"
+      address6:
+        type: "string"
+        x-go-name: "Address6"
+      allowedips:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "AllowedIPs"
+      connected:
+        type: "string"
+        x-go-name: "Connected"
+      defaultacl:
+        type: "string"
+        description: "== PRO =="
+        x-go-name: "DefaultACL"
+      dnson:
+        type: "string"
+        x-go-name: "DNSOn"
+      egressgatewaynatenabled:
+        type: "string"
+        x-go-name: "EgressGatewayNatEnabled"
+      egressgatewayranges:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "EgressGatewayRanges"
+      egressgatewayrequest:
+        $ref: "#/definitions/EgressGatewayRequest"
+      endpoint:
+        type: "string"
+        x-go-name: "Endpoint"
+      expdatetime:
+        type: "integer"
+        format: "int64"
+        x-go-name: "ExpirationDateTime"
+      failover:
+        type: "string"
+        x-go-name: "Failover"
+      failovernode:
+        type: "string"
+        x-go-name: "FailoverNode"
+      firewallinuse:
+        type: "string"
+        x-go-name: "FirewallInUse"
+      id:
+        type: "string"
+        x-go-name: "ID"
+      ingressgatewayrange:
+        type: "string"
+        x-go-name: "IngressGatewayRange"
+      ingressgatewayrange6:
+        type: "string"
+        x-go-name: "IngressGatewayRange6"
+      interface:
+        type: "string"
+        x-go-name: "Interface"
+      interfaces:
+        type: "array"
+        items:
+          $ref: "#/definitions/Iface"
+        x-go-name: "Interfaces"
+      internetgateway:
+        type: "string"
+        x-go-name: "InternetGateway"
+      ipforwarding:
+        type: "string"
+        x-go-name: "IPForwarding"
+      isdocker:
+        type: "string"
+        x-go-name: "IsDocker"
+      isegressgateway:
+        type: "string"
+        x-go-name: "IsEgressGateway"
+      ishub:
+        type: "string"
+        x-go-name: "IsHub"
+      isingressgateway:
+        type: "string"
+        x-go-name: "IsIngressGateway"
+      isk8s:
+        type: "string"
+        x-go-name: "IsK8S"
+      ispending:
+        type: "string"
+        x-go-name: "IsPending"
+      isrelay:
+        type: "string"
+        x-go-name: "IsRelay"
+      isrelayed:
+        type: "string"
+        x-go-name: "IsRelayed"
+      isserver:
+        type: "string"
+        x-go-name: "IsServer"
+      isstatic:
+        type: "string"
+        description: "IsStatic - refers to if the Endpoint is set manually or dynamically"
+        x-go-name: "IsStatic"
+      lastcheckin:
+        type: "integer"
+        format: "int64"
+        x-go-name: "LastCheckIn"
+      lastmodified:
+        type: "integer"
+        format: "int64"
+        x-go-name: "LastModified"
+      lastpeerupdate:
+        type: "integer"
+        format: "int64"
+        x-go-name: "LastPeerUpdate"
+      listenport:
+        type: "integer"
+        format: "int32"
+        x-go-name: "ListenPort"
+      localaddress:
+        type: "string"
+        x-go-name: "LocalAddress"
+      locallistenport:
+        type: "integer"
+        format: "int32"
+        x-go-name: "LocalListenPort"
+      macaddress:
+        type: "string"
+        x-go-name: "MacAddress"
+      mtu:
+        type: "integer"
+        format: "int32"
+        x-go-name: "MTU"
+      name:
+        type: "string"
+        x-go-name: "Name"
+      network:
+        type: "string"
+        x-go-name: "Network"
+      networksettings:
+        $ref: "#/definitions/Network"
+      os:
+        type: "string"
+        x-go-name: "OS"
+      ownerid:
+        type: "string"
+        x-go-name: "OwnerID"
+      password:
+        type: "string"
+        x-go-name: "Password"
+      persistentkeepalive:
+        type: "integer"
+        format: "int32"
+        x-go-name: "PersistentKeepalive"
+      publickey:
+        type: "string"
+        x-go-name: "PublicKey"
+      relayaddrs:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "RelayAddrs"
+      server:
+        type: "string"
+        x-go-name: "Server"
+      traffickeys:
+        $ref: "#/definitions/TrafficKeys"
+      udpholepunch:
+        type: "string"
+        x-go-name: "UDPHolePunch"
+      version:
+        type: "string"
+        x-go-name: "Version"
+    description: "LegacyNode - legacy struct for node model"
+    example:
+      isk8s: "isk8s"
+      ingressgatewayrange: "ingressgatewayrange"
+      lastcheckin: 6
+      isrelay: "isrelay"
+      internetgateway: "internetgateway"
+      isingressgateway: "isingressgateway"
+      isstatic: "isstatic"
+      password: "password"
+      accesskey: "accesskey"
+      action: "action"
+      address6: "address6"
+      expdatetime: 0
+      macaddress: "macaddress"
+      id: "id"
+      ingressgatewayrange6: "ingressgatewayrange6"
+      ispending: "ispending"
+      locallistenport: 2
+      isserver: "isserver"
+      ownerid: "ownerid"
+      version: "version"
+      firewallinuse: "firewallinuse"
+      localaddress: "localaddress"
+      mtu: 7
+      egressgatewayranges:
+      - "egressgatewayranges"
+      - "egressgatewayranges"
+      failover: "failover"
+      lastmodified: 1
+      egressgatewaynatenabled: "egressgatewaynatenabled"
+      name: "name"
+      isrelayed: "isrelayed"
+      udpholepunch: "udpholepunch"
+      server: "server"
+      ipforwarding: "ipforwarding"
+      interface: "interface"
+      network: "network"
+      allowedips:
+      - "allowedips"
+      - "allowedips"
+      endpoint: "endpoint"
+      defaultacl: "defaultacl"
+      relayaddrs:
+      - "relayaddrs"
+      - "relayaddrs"
+      interfaces:
+      - address:
+          IP: "IP"
+          Mask: ""
+        addressString: "addressString"
+        name: "name"
+      - address:
+          IP: "IP"
+          Mask: ""
+        addressString: "addressString"
+        name: "name"
+      lastpeerupdate: 5
+      address: "address"
+      egressgatewayrequest:
+        natenabled: "natenabled"
+        ranges:
+        - "ranges"
+        - "ranges"
+        netid: "netid"
+        nodeid: "nodeid"
+      os: "os"
+      persistentkeepalive: 9
+      networksettings:
+        defaultinterface: "defaultinterface"
+        isipv6: "isipv6"
+        netid: "netid"
+        defaultpostdown: "defaultpostdown"
+        nodeslastmodified: 2
+        addressrange: "addressrange"
+        nodelimit: 5
+        networklastmodified: 5
+        defaultudpholepunch: "defaultudpholepunch"
+        allowmanualsignup: "allowmanualsignup"
+        defaultkeepalive: 0
+        addressrange6: "addressrange6"
+        defaultacl: "defaultacl"
+        defaultlistenport: 6
+        isipv4: "isipv4"
+        defaultmtu: 1
+      publickey: "publickey"
+      listenport: 5
+      connected: "connected"
+      ishub: "ishub"
+      failovernode: "failovernode"
+      traffickeys:
+        mine:
+        - 3
+        - 3
+        server:
+        - 2
+        - 2
+      dnson: "dnson"
+      isdocker: "isdocker"
+      isegressgateway: "isegressgateway"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  Network:
+    type: "object"
+    properties:
+      addressrange:
+        type: "string"
+        x-go-name: "AddressRange"
+      addressrange6:
+        type: "string"
+        x-go-name: "AddressRange6"
+      allowmanualsignup:
+        type: "string"
+        x-go-name: "AllowManualSignUp"
+      defaultacl:
+        type: "string"
+        x-go-name: "DefaultACL"
+      defaultinterface:
+        type: "string"
+        x-go-name: "DefaultInterface"
+      defaultkeepalive:
+        type: "integer"
+        format: "int32"
+        x-go-name: "DefaultKeepalive"
+      defaultlistenport:
+        type: "integer"
+        format: "int32"
+        x-go-name: "DefaultListenPort"
+      defaultmtu:
+        type: "integer"
+        format: "int32"
+        x-go-name: "DefaultMTU"
+      defaultpostdown:
+        type: "string"
+        x-go-name: "DefaultPostDown"
+      defaultudpholepunch:
+        type: "string"
+        x-go-name: "DefaultUDPHolePunch"
+      isipv4:
+        type: "string"
+        x-go-name: "IsIPv4"
+      isipv6:
+        type: "string"
+        x-go-name: "IsIPv6"
+      netid:
+        type: "string"
+        x-go-name: "NetID"
+      networklastmodified:
+        type: "integer"
+        format: "int64"
+        x-go-name: "NetworkLastModified"
+      nodelimit:
+        type: "integer"
+        format: "int32"
+        x-go-name: "NodeLimit"
+      nodeslastmodified:
+        type: "integer"
+        format: "int64"
+        x-go-name: "NodesLastModified"
+    description: "Network Struct - contains info for a given unique network\nAt  some\
+      \ point, need to replace all instances of Name with something else like  Identifier"
+    example:
+      defaultinterface: "defaultinterface"
+      isipv6: "isipv6"
+      netid: "netid"
+      defaultpostdown: "defaultpostdown"
+      nodeslastmodified: 2
+      addressrange: "addressrange"
+      nodelimit: 5
+      networklastmodified: 5
+      defaultudpholepunch: "defaultudpholepunch"
+      allowmanualsignup: "allowmanualsignup"
+      defaultkeepalive: 0
+      addressrange6: "addressrange6"
+      defaultacl: "defaultacl"
+      defaultlistenport: 6
+      isipv4: "isipv4"
+      defaultmtu: 1
+    x-go-package: "github.com/gravitl/netmaker/models"
+  Node:
+    type: "object"
+    properties:
+      action:
+        type: "string"
+        x-go-name: "Action"
+      address:
+        $ref: "#/definitions/IPNet"
+      address6:
+        $ref: "#/definitions/IPNet"
+      connected:
+        type: "boolean"
+        x-go-name: "Connected"
+      defaultacl:
+        type: "string"
+        description: "== PRO =="
+        x-go-name: "DefaultACL"
+      dnson:
+        type: "boolean"
+        x-go-name: "DNSOn"
+      egressgatewaynatenabled:
+        type: "boolean"
+        x-go-name: "EgressGatewayNatEnabled"
+      egressgatewayranges:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "EgressGatewayRanges"
+      egressgatewayrequest:
+        $ref: "#/definitions/EgressGatewayRequest"
+      expdatetime:
+        type: "string"
+        format: "date-time"
+        x-go-name: "ExpirationDateTime"
+      fail_over_peers:
+        type: "object"
+        additionalProperties:
+          type: "object"
+          properties: {}
+        x-go-name: "FailOverPeers"
+      failed_over_by:
+        type: "string"
+        format: "uuid"
+        x-go-name: "FailedOverBy"
+      hostid:
+        type: "string"
+        format: "uuid"
+        x-go-name: "HostID"
+      id:
+        type: "string"
+        format: "uuid"
+        x-go-name: "ID"
+      inet_node_req:
+        $ref: "#/definitions/InetNodeReq"
+      ingressdns:
+        type: "string"
+        x-go-name: "IngressDNS"
+      ingressgatewayrange:
+        type: "string"
+        x-go-name: "IngressGatewayRange"
+      ingressgatewayrange6:
+        type: "string"
+        x-go-name: "IngressGatewayRange6"
+      internetgw_node_id:
+        type: "string"
+        x-go-name: "InternetGwID"
+      is_fail_over:
+        type: "boolean"
+        x-go-name: "IsFailOver"
+      isegressgateway:
+        type: "boolean"
+        x-go-name: "IsEgressGateway"
+      isingressgateway:
+        type: "boolean"
+        x-go-name: "IsIngressGateway"
+      isinternetgateway:
+        type: "boolean"
+        x-go-name: "IsInternetGateway"
+      isrelay:
+        type: "boolean"
+        x-go-name: "IsRelay"
+      isrelayed:
+        type: "boolean"
+        x-go-name: "IsRelayed"
+      lastcheckin:
+        type: "string"
+        format: "date-time"
+        x-go-name: "LastCheckIn"
+      lastmodified:
+        type: "string"
+        format: "date-time"
+        x-go-name: "LastModified"
+      lastpeerupdate:
+        type: "string"
+        format: "date-time"
+        x-go-name: "LastPeerUpdate"
+      localaddress:
+        $ref: "#/definitions/IPNet"
+      metadata:
+        type: "string"
+        x-go-name: "Metadata"
+      network:
+        type: "string"
+        x-go-name: "Network"
+      networkrange:
+        $ref: "#/definitions/IPNet"
+      networkrange6:
+        $ref: "#/definitions/IPNet"
+      ownerid:
+        type: "string"
+        x-go-name: "OwnerID"
+      pendingdelete:
+        type: "boolean"
+        x-go-name: "PendingDelete"
+      relayedby:
+        type: "string"
+        x-go-name: "RelayedBy"
+      relaynodes:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "RelayedNodes"
+      server:
+        type: "string"
+        x-go-name: "Server"
+    description: "Node - a model of a network node"
+    example:
+      server: "server"
+      ingressgatewayrange: "ingressgatewayrange"
+      metadata: "metadata"
+      inet_node_req:
+        inet_node_client_ids:
+        - "inet_node_client_ids"
+        - "inet_node_client_ids"
+      lastcheckin: "2000-01-23T04:56:07.000+00:00"
+      isrelay: true
+      relayedby: "relayedby"
+      hostid: "046b6c7f-0b8a-43b9-b35d-6489e6daee91"
+      isingressgateway: true
+      network: "network"
+      internetgw_node_id: "internetgw_node_id"
+      networkrange:
+        IP: "IP"
+        Mask: ""
+      is_fail_over: true
+      action: "action"
+      address6:
+        IP: "IP"
+        Mask: ""
+      expdatetime: "2000-01-23T04:56:07.000+00:00"
+      defaultacl: "defaultacl"
+      id: "046b6c7f-0b8a-43b9-b35d-6489e6daee91"
+      ingressgatewayrange6: "ingressgatewayrange6"
+      fail_over_peers:
+        key: "{}"
+      ingressdns: "ingressdns"
+      networkrange6:
+        IP: "IP"
+        Mask: ""
+      isinternetgateway: true
+      lastpeerupdate: "2000-01-23T04:56:07.000+00:00"
+      address:
+        IP: "IP"
+        Mask: ""
+      egressgatewayrequest:
+        natenabled: "natenabled"
+        ranges:
+        - "ranges"
+        - "ranges"
+        netid: "netid"
+        nodeid: "nodeid"
+      ownerid: "ownerid"
+      relaynodes:
+      - "relaynodes"
+      - "relaynodes"
+      localaddress:
+        IP: "IP"
+        Mask: ""
+      connected: true
+      egressgatewayranges:
+      - "egressgatewayranges"
+      - "egressgatewayranges"
+      failed_over_by: "046b6c7f-0b8a-43b9-b35d-6489e6daee91"
+      lastmodified: "2000-01-23T04:56:07.000+00:00"
+      egressgatewaynatenabled: true
+      pendingdelete: true
+      dnson: true
+      isegressgateway: true
+      isrelayed: true
+    x-go-package: "github.com/gravitl/netmaker/models"
+  PeerConfig:
+    type: "object"
+    properties:
+      AllowedIPs:
+        type: "array"
+        description: "AllowedIPs specifies a list of allowed IP addresses in CIDR\
+          \ notation\nfor this peer."
+        items:
+          $ref: "#/definitions/IPNet"
+      Endpoint:
+        $ref: "#/definitions/UDPAddr"
+      PersistentKeepaliveInterval:
+        $ref: "#/definitions/Duration"
+      PresharedKey:
+        $ref: "#/definitions/Key"
+      PublicKey:
+        $ref: "#/definitions/Key"
+      Remove:
+        type: "boolean"
+        description: "Remove specifies if the peer with this public key should be\
+          \ removed\nfrom a device's peer list."
+      ReplaceAllowedIPs:
+        type: "boolean"
+        description: "ReplaceAllowedIPs specifies if the allowed IPs specified in\
+          \ this peer\nconfiguration should replace any existing ones, instead of\
+          \ appending them\nto the allowed IPs list."
+      UpdateOnly:
+        type: "boolean"
+        description: "UpdateOnly specifies that an operation will only occur on this\
+          \ peer\nif the peer already exists as part of the interface."
+    title: "A PeerConfig is a WireGuard device peer configuration."
+    description: "Because the zero value of some Go types may be significant to WireGuard\
+      \ for\nPeerConfig fields, pointer types are used for some of these fields. Only\n\
+      pointer fields which are not nil will be applied when configuring a peer."
+    example:
+      AllowedIPs:
+      - IP: "IP"
+        Mask: ""
+      - IP: "IP"
+        Mask: ""
+      Endpoint:
+        Zone: "Zone"
+        IP: "IP"
+        Port: 0
+      ReplaceAllowedIPs: true
+      PublicKey: ""
+      PersistentKeepaliveInterval: {}
+      PresharedKey: ""
+      UpdateOnly: true
+      Remove: true
+    x-go-package: "golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+  PeerMap:
+    type: "object"
+    description: "PeerMap - peer map for ids and addresses in metrics"
+    additionalProperties:
+      $ref: "#/definitions/IDandAddr"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  RegisterResponse:
+    type: "object"
+    properties:
+      requested_host:
+        $ref: "#/definitions/Host"
+      server_config:
+        $ref: "#/definitions/ServerConfig"
+    description: "RegisterResponse - the response to a successful enrollment register"
+    example:
+      requested_host:
+        isk8s: true
+        ipforwarding: true
+        endpointip: "endpointip"
+        wg_public_listen_port: 5
+        interface: "interface"
+        isstatic: true
+        autoupdate: true
+        macaddress: ""
+        hostpass: "hostpass"
+        id: "046b6c7f-0b8a-43b9-b35d-6489e6daee91"
+        isdefault: true
+        defaultinterface: "defaultinterface"
+        interfaces:
+        - address:
+            IP: "IP"
+            Mask: ""
+          addressString: "addressString"
+          name: "name"
+        - address:
+            IP: "IP"
+            Mask: ""
+          addressString: "addressString"
+          name: "name"
+        debug: true
+        traffickeypublic:
+        - 1
+        - 1
+        os: "os"
+        persistentkeepalive: {}
+        publickey: ""
+        endpointipv6: "endpointipv6"
+        listenport: 0
+        version: "version"
+        firewallinuse: "firewallinuse"
+        mtu: 6
+        daemoninstalled: true
+        nodes:
+        - "nodes"
+        - "nodes"
+        turn_endpoint: "turn_endpoint"
+        name: "name"
+        nat_type: "nat_type"
+        isdocker: true
+        verbosity: 5
+      server_config:
+        Platform: "Platform"
+        Server: "Server"
+        CacheEnabled: "CacheEnabled"
+        NetworksLimit: 5
+        RestBackend: "RestBackend"
+        NetclientEndpointDetection: "NetclientEndpointDetection"
+        TurnPassword: "TurnPassword"
+        MQUserName: "MQUserName"
+        EgressesLimit: 0
+        Verbosity: 9
+        CoreDNSAddr: "CoreDNSAddr"
+        Version: "Version"
+        Database: "Database"
+        DisplayKeys: "DisplayKeys"
+        RacAutoDisable: true
+        UsersLimit: 7
+        OIDCIssuer: "OIDCIssuer"
+        MachinesLimit: 1
+        AllowedOrigin: "AllowedOrigin"
+        TurnApiServer: "TurnApiServer"
+        LicenseValue: "LicenseValue"
+        DNSMode: "DNSMode"
+        StunList: "StunList"
+        NetclientAutoUpdate: "NetclientAutoUpdate"
+        APIPort: "APIPort"
+        ClientID: "ClientID"
+        Environment: "Environment"
+        APIConnString: "APIConnString"
+        TurnServer: "TurnServer"
+        PublicIPService: "PublicIPService"
+        ServerBrokerEndpoint: "ServerBrokerEndpoint"
+        JwtValidityDuration: {}
+        MessageQueueBackend: "MessageQueueBackend"
+        IsEE: "IsEE"
+        EmqxRestEndpoint: "EmqxRestEndpoint"
+        HostNetwork: "HostNetwork"
+        FrontendURL: "FrontendURL"
+        NetmakerTenantID: "NetmakerTenantID"
+        endpoint_detection: true
+        AllowedEmailDomains: "AllowedEmailDomains"
+        TurnUserName: "TurnUserName"
+        StunPort: 5
+        DeployedByOperator: true
+        IngressesLimit: 6
+        SQLConn: "SQLConn"
+        NodeID: "NodeID"
+        APIHost: "APIHost"
+        MetricsExporter: "MetricsExporter"
+        BrokerType: "BrokerType"
+        UseTurn: true
+        Broker: "Broker"
+        TurnPort: 2
+        AuthProvider: "AuthProvider"
+        DisableRemoteIPCheck: "DisableRemoteIPCheck"
+        Telemetry: "Telemetry"
+        DNSKey: "DNSKey"
+        AzureTenant: "AzureTenant"
+        BasicAuth: "BasicAuth"
+        ClientSecret: "ClientSecret"
+        MasterKey: "MasterKey"
+        MQPassword: "MQPassword"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  RelayRequest:
+    type: "object"
+    properties:
+      netid:
+        type: "string"
+        x-go-name: "NetID"
+      nodeid:
+        type: "string"
+        x-go-name: "NodeID"
+      relayaddrs:
+        type: "array"
+        items:
+          type: "string"
+        x-go-name: "RelayedNodes"
+    description: "RelayRequest - relay request struct"
+    example:
+      netid: "netid"
+      nodeid: "nodeid"
+      relayaddrs:
+      - "relayaddrs"
+      - "relayaddrs"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  ServerConfig:
+    type: "object"
+    properties:
+      APIConnString:
+        type: "string"
+      APIHost:
+        type: "string"
+      APIPort:
+        type: "string"
+      AllowedEmailDomains:
+        type: "string"
+      AllowedOrigin:
+        type: "string"
+      AuthProvider:
+        type: "string"
+      AzureTenant:
+        type: "string"
+      BasicAuth:
+        type: "string"
+      Broker:
+        type: "string"
+      BrokerType:
+        type: "string"
+      CacheEnabled:
+        type: "string"
+      ClientID:
+        type: "string"
+      ClientSecret:
+        type: "string"
+      CoreDNSAddr:
+        type: "string"
+      DNSKey:
+        type: "string"
+      DNSMode:
+        type: "string"
+      Database:
+        type: "string"
+      DeployedByOperator:
+        type: "boolean"
+      DisableRemoteIPCheck:
+        type: "string"
+      DisplayKeys:
+        type: "string"
+      EgressesLimit:
+        type: "integer"
+        format: "int64"
+      EmqxRestEndpoint:
+        type: "string"
+      Environment:
+        type: "string"
+      FrontendURL:
+        type: "string"
+      HostNetwork:
+        type: "string"
+      IngressesLimit:
+        type: "integer"
+        format: "int64"
+      IsEE:
+        type: "string"
+        x-go-name: "IsPro"
+      JwtValidityDuration:
+        $ref: "#/definitions/Duration"
+      LicenseValue:
+        type: "string"
+      MQPassword:
+        type: "string"
+      MQUserName:
+        type: "string"
+      MachinesLimit:
+        type: "integer"
+        format: "int64"
+      MasterKey:
+        type: "string"
+      MessageQueueBackend:
+        type: "string"
+      MetricsExporter:
+        type: "string"
+      NetclientAutoUpdate:
+        type: "string"
+      NetclientEndpointDetection:
+        type: "string"
+      NetmakerTenantID:
+        type: "string"
+      NetworksLimit:
+        type: "integer"
+        format: "int64"
+      NodeID:
+        type: "string"
+      OIDCIssuer:
+        type: "string"
+      Platform:
+        type: "string"
+      PublicIPService:
+        type: "string"
+      RacAutoDisable:
+        type: "boolean"
+      RestBackend:
+        type: "string"
+      SQLConn:
+        type: "string"
+      Server:
+        type: "string"
+      ServerBrokerEndpoint:
+        type: "string"
+      StunList:
+        type: "string"
+      StunPort:
+        type: "integer"
+        format: "int64"
+      Telemetry:
+        type: "string"
+      TurnApiServer:
+        type: "string"
+      TurnPassword:
+        type: "string"
+      TurnPort:
+        type: "integer"
+        format: "int64"
+      TurnServer:
+        type: "string"
+      TurnUserName:
+        type: "string"
+      UseTurn:
+        type: "boolean"
+      UsersLimit:
+        type: "integer"
+        format: "int64"
+      Verbosity:
+        type: "integer"
+        format: "int32"
+      Version:
+        type: "string"
+      endpoint_detection:
+        type: "boolean"
+        x-go-name: "EndpointDetection"
+    description: "ServerConfig - server conf struct"
+    example:
+      Platform: "Platform"
+      Server: "Server"
+      CacheEnabled: "CacheEnabled"
+      NetworksLimit: 5
+      RestBackend: "RestBackend"
+      NetclientEndpointDetection: "NetclientEndpointDetection"
+      TurnPassword: "TurnPassword"
+      MQUserName: "MQUserName"
+      EgressesLimit: 0
+      Verbosity: 9
+      CoreDNSAddr: "CoreDNSAddr"
+      Version: "Version"
+      Database: "Database"
+      DisplayKeys: "DisplayKeys"
+      RacAutoDisable: true
+      UsersLimit: 7
+      OIDCIssuer: "OIDCIssuer"
+      MachinesLimit: 1
+      AllowedOrigin: "AllowedOrigin"
+      TurnApiServer: "TurnApiServer"
+      LicenseValue: "LicenseValue"
+      DNSMode: "DNSMode"
+      StunList: "StunList"
+      NetclientAutoUpdate: "NetclientAutoUpdate"
+      APIPort: "APIPort"
+      ClientID: "ClientID"
+      Environment: "Environment"
+      APIConnString: "APIConnString"
+      TurnServer: "TurnServer"
+      PublicIPService: "PublicIPService"
+      ServerBrokerEndpoint: "ServerBrokerEndpoint"
+      JwtValidityDuration: {}
+      MessageQueueBackend: "MessageQueueBackend"
+      IsEE: "IsEE"
+      EmqxRestEndpoint: "EmqxRestEndpoint"
+      HostNetwork: "HostNetwork"
+      FrontendURL: "FrontendURL"
+      NetmakerTenantID: "NetmakerTenantID"
+      endpoint_detection: true
+      AllowedEmailDomains: "AllowedEmailDomains"
+      TurnUserName: "TurnUserName"
+      StunPort: 5
+      DeployedByOperator: true
+      IngressesLimit: 6
+      SQLConn: "SQLConn"
+      NodeID: "NodeID"
+      APIHost: "APIHost"
+      MetricsExporter: "MetricsExporter"
+      BrokerType: "BrokerType"
+      UseTurn: true
+      Broker: "Broker"
+      TurnPort: 2
+      AuthProvider: "AuthProvider"
+      DisableRemoteIPCheck: "DisableRemoteIPCheck"
+      Telemetry: "Telemetry"
+      DNSKey: "DNSKey"
+      AzureTenant: "AzureTenant"
+      BasicAuth: "BasicAuth"
+      ClientSecret: "ClientSecret"
+      MasterKey: "MasterKey"
+      MQPassword: "MQPassword"
+    x-go-package: "github.com/gravitl/netmaker/config"
+  Signal:
+    type: "object"
+    properties:
+      action:
+        $ref: "#/definitions/SignalAction"
+      from_host_id:
+        type: "string"
+        x-go-name: "FromHostID"
+      from_host_pubkey:
+        type: "string"
+        x-go-name: "FromHostPubKey"
+      from_node_id:
+        type: "string"
+        x-go-name: "FromNodeID"
+      is_pro:
+        type: "boolean"
+        x-go-name: "IsPro"
+      reply:
+        type: "boolean"
+        x-go-name: "Reply"
+      server:
+        type: "string"
+        x-go-name: "Server"
+      timestamp:
+        type: "integer"
+        format: "int64"
+        x-go-name: "TimeStamp"
+      to_host_id:
+        type: "string"
+        x-go-name: "ToHostID"
+      to_host_pubkey:
+        type: "string"
+        x-go-name: "ToHostPubKey"
+      to_node_id:
+        type: "string"
+        x-go-name: "ToNodeID"
+    description: "Signal - struct for signalling peer"
+    example:
+      from_node_id: "from_node_id"
+      server: "server"
+      to_host_id: "to_host_id"
+      to_host_pubkey: "to_host_pubkey"
+      is_pro: true
+      action: {}
+      from_host_id: "from_host_id"
+      from_host_pubkey: "from_host_pubkey"
+      reply: true
+      to_node_id: "to_node_id"
+      timestamp: 0
+    x-go-package: "github.com/gravitl/netmaker/models"
+  SignalAction:
+    type: "string"
+    description: "SignalAction - turn peer signal action"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  SuccessResponse:
+    type: "object"
+    properties:
+      Code:
+        type: "integer"
+        format: "int64"
+      Message:
+        type: "string"
+      Response: {}
+    title: "SuccessResponse is struct for sending error message with code."
+    example:
+      Response: ""
+      Message: "Message"
+      Code: 0
+    x-go-package: "github.com/gravitl/netmaker/models"
+  TrafficKeys:
+    type: "object"
+    properties:
+      mine:
+        type: "array"
+        items:
+          type: "integer"
+          format: "uint8"
+        x-go-name: "Mine"
+      server:
+        type: "array"
+        items:
+          type: "integer"
+          format: "uint8"
+        x-go-name: "Server"
+    description: "TrafficKeys - struct to hold public keys"
+    example:
+      mine:
+      - 3
+      - 3
+      server:
+      - 2
+      - 2
+    x-go-package: "github.com/gravitl/netmaker/models"
+  UDPAddr:
+    type: "object"
+    properties:
+      IP:
+        type: "string"
+      Port:
+        type: "integer"
+        format: "int64"
+      Zone:
+        type: "string"
+    title: "UDPAddr represents the address of a UDP end point."
+    example:
+      Zone: "Zone"
+      IP: "IP"
+      Port: 0
+    x-go-package: "net"
+  User:
+    type: "object"
+    properties:
+      isadmin:
+        type: "boolean"
+        x-go-name: "IsAdmin"
+      issuperadmin:
+        type: "boolean"
+        x-go-name: "IsSuperAdmin"
+      last_login_time:
+        type: "string"
+        format: "date-time"
+        x-go-name: "LastLoginTime"
+      password:
+        type: "string"
+        x-go-name: "Password"
+      remote_gw_ids:
+        type: "object"
+        additionalProperties:
+          type: "object"
+          properties: {}
+        x-go-name: "RemoteGwIDs"
+      username:
+        type: "string"
+        x-go-name: "UserName"
+    description: "User struct - struct for Users"
+    example:
+      password: "password"
+      isadmin: true
+      last_login_time: "2000-01-23T04:56:07.000+00:00"
+      issuperadmin: true
+      remote_gw_ids:
+        key: "{}"
+      username: "username"
+    x-go-package: "github.com/gravitl/netmaker/models"
+  UserAuthParams:
+    type: "object"
+    properties:
+      password:
+        type: "string"
+        x-go-name: "Password"
+      username:
+        type: "string"
+        x-go-name: "UserName"
+    description: "UserAuthParams - user auth params struct"
+    example:
+      password: "password"
+      username: "username"
+    x-go-package: "github.com/gravitl/netmaker/models"
+responses:
+  EnrollmentKey:
+    description: ""
+    schema:
+      $ref: "#/definitions/EnrollmentKey"
+  EnrollmentKeys:
+    description: ""
+    schema:
+      type: "array"
+      items:
+        $ref: "#/definitions/EnrollmentKey"
+  RegisterResponse:
+    description: ""
+    schema:
+      $ref: "#/definitions/RegisterResponse"
+  aclContainerResponse:
+    description: ""
+    schema:
+      $ref: "#/definitions/ACLContainer"
+  apiHostResponse:
+    description: ""
+    schema:
+      $ref: "#/definitions/ApiHost"
+  apiHostSliceResponse:
+    description: ""
+    schema:
+      type: "array"
+      items:
+        $ref: "#/definitions/ApiHost"
+  byteArrayResponse:
+    description: ""
+    schema:
+      type: "array"
+      items:
+        type: "integer"
+        format: "uint8"
+  dnsResponse:
+    description: "Success"
+    schema:
+      type: "array"
+      items:
+        $ref: "#/definitions/DNSEntry"
+  extClientResponse:
+    description: ""
+    schema:
+      $ref: "#/definitions/ExtClient"
+  extClientSliceResponse:
+    description: ""
+    schema:
+      type: "array"
+      items:
+        $ref: "#/definitions/ExtClient"
+  fileResponse:
+    description: ""
+    schema:
+      $ref: "#/definitions/File"
+  getNetworksSliceResponse:
+    description: ""
+    schema:
+      type: "array"
+      items:
+        $ref: "#/definitions/Network"
+  hasAdmin:
+    description: ""
+  hostPull:
+    description: ""
+    schema:
+      $ref: "#/definitions/HostPull"
+  networkBodyResponse:
+    description: ""
+    schema:
+      $ref: "#/definitions/Network"
+  nodeResponse:
+    description: ""
+    schema:
+      $ref: "#/definitions/LegacyNode"
+  nodeSliceResponse:
+    description: ""
+    schema:
+      type: "array"
+      items:
+        $ref: "#/definitions/ApiNode"
+  okResponse:
+    description: ""
+  serverConfigResponse:
+    description: ""
+    schema:
+      $ref: "#/definitions/ServerConfig"
+  signal:
+    description: ""
+    schema:
+      $ref: "#/definitions/Signal"
+  stringJSONResponse:
+    description: ""
+  successResponse:
+    description: ""
+    schema:
+      $ref: "#/definitions/SuccessResponse"
+  userBodyResponse:
+    description: ""
+    schema:
+      $ref: "#/definitions/User"
