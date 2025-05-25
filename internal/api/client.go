@@ -109,6 +109,24 @@ func (c *Client) GetNetworks() ([]models.Network, error) {
 	// Convert Swagger models to our internal models
 	networks := make([]models.Network, len(swaggerNetworks))
 	for i, swaggerNetwork := range swaggerNetworks {
+		// Create a map to store all network data
+		networkData := models.JSONB{}
+		
+		// Add all fields from the swagger network to the data map
+		networkDataBytes, err := json.Marshal(swaggerNetwork)
+		if err != nil {
+			logrus.Warnf("Failed to marshal network data for %s: %v", swaggerNetwork.Netid, err)
+		} else {
+			// Unmarshal into a map to get all fields
+			var networkDataMap map[string]interface{}
+			if err := json.Unmarshal(networkDataBytes, &networkDataMap); err != nil {
+				logrus.Warnf("Failed to unmarshal network data for %s: %v", swaggerNetwork.Netid, err)
+			} else {
+				// Store all fields in the data map
+				networkData = networkDataMap
+			}
+		}
+		
 		// Map fields from swagger.Network to our models.Network
 		networks[i] = models.Network{
 			ID:                     swaggerNetwork.Netid,
@@ -131,7 +149,7 @@ func (c *Client) GetNetworks() ([]models.Network, error) {
 			IsCurrent:              true,
 			LastModified:           time.Now(),
 			CreatedAt:              time.Now(),
-			Data:                   models.JSONB{}, // Initialize empty JSONB
+			Data:                   networkData,
 		}
 		logrus.Debugf("Converted network: %s", networks[i].ID)
 	}
@@ -157,10 +175,28 @@ func (c *Client) GetNodes(networkID string) ([]models.Node, error) {
 	// Convert to our internal model
 	nodes := make([]models.Node, len(swaggerNodes))
 	for i, swaggerNode := range swaggerNodes {
+		// Create a map to store all node data
+		nodeData := models.JSONB{}
+		
+		// Add all fields from the swagger node to the data map
+		nodeDataBytes, err := json.Marshal(swaggerNode)
+		if err != nil {
+			logrus.Warnf("Failed to marshal node data for %s: %v", swaggerNode.Id, err)
+		} else {
+			// Unmarshal into a map to get all fields
+			var nodeDataMap map[string]interface{}
+			if err := json.Unmarshal(nodeDataBytes, &nodeDataMap); err != nil {
+				logrus.Warnf("Failed to unmarshal node data for %s: %v", swaggerNode.Id, err)
+			} else {
+				// Store all fields in the data map
+				nodeData = nodeDataMap
+			}
+		}
+		
 		// Map fields from swagger.ApiNode to our models.Node
-		// This is a simplified mapping, you may need to adjust based on your models
 		nodes[i] = models.Node{
 			ID:               swaggerNode.Id,
+			Version:          1, // Default to version 1 for new nodes
 			NetworkID:        swaggerNode.Network,
 			Name:             swaggerNode.Id, // Using ID as name since there's no name field
 			Address:          swaggerNode.Address,
@@ -171,7 +207,10 @@ func (c *Client) GetNodes(networkID string) ([]models.Node, error) {
 			IsIngressGateway: swaggerNode.Isingressgateway,
 			IsRelay:          swaggerNode.Isrelay,
 			Connected:        swaggerNode.Connected,
-			// Add other fields as needed
+			IsCurrent:        true,
+			LastModified:     time.Now(),
+			CreatedAt:        time.Now(),
+			Data:             nodeData,
 		}
 		logrus.Debugf("Converted node: %s", nodes[i].ID)
 	}
@@ -197,16 +236,38 @@ func (c *Client) GetExtClients(networkID string) ([]models.ExtClient, error) {
 	// Convert to our internal model
 	extClients := make([]models.ExtClient, len(swaggerExtClients))
 	for i, swaggerExtClient := range swaggerExtClients {
+		// Create a map to store all ext client data
+		extClientData := models.JSONB{}
+		
+		// Add all fields from the swagger ext client to the data map
+		extClientDataBytes, err := json.Marshal(swaggerExtClient)
+		if err != nil {
+			logrus.Warnf("Failed to marshal ext client data for %s: %v", swaggerExtClient.Clientid, err)
+		} else {
+			// Unmarshal into a map to get all fields
+			var extClientDataMap map[string]interface{}
+			if err := json.Unmarshal(extClientDataBytes, &extClientDataMap); err != nil {
+				logrus.Warnf("Failed to unmarshal ext client data for %s: %v", swaggerExtClient.Clientid, err)
+			} else {
+				// Store all fields in the data map
+				extClientData = extClientDataMap
+			}
+		}
+		
 		// Map fields from swagger.ExtClient to our models.ExtClient
 		extClients[i] = models.ExtClient{
-			ID:        swaggerExtClient.Clientid,
-			NetworkID: swaggerExtClient.Network,
-			Name:      swaggerExtClient.Clientid, // Using clientid as name since there's no name field
-			Address:   swaggerExtClient.Address,
-			Address6:  swaggerExtClient.Address6,
-			PublicKey: swaggerExtClient.Publickey,
-			Enabled:   swaggerExtClient.Enabled,
-			// Add other fields as needed
+			ID:           swaggerExtClient.Clientid,
+			Version:      1, // Default to version 1 for new ext clients
+			NetworkID:    swaggerExtClient.Network,
+			Name:         swaggerExtClient.Clientid, // Using clientid as name since there's no name field
+			Address:      swaggerExtClient.Address,
+			Address6:     swaggerExtClient.Address6,
+			PublicKey:    swaggerExtClient.Publickey,
+			Enabled:      swaggerExtClient.Enabled,
+			IsCurrent:    true,
+			LastModified: time.Now(),
+			CreatedAt:    time.Now(),
+			Data:         extClientData,
 		}
 		logrus.Debugf("Converted ext client: %s", extClients[i].ID)
 	}
@@ -270,6 +331,29 @@ func (c *Client) GetHosts() ([]models.Host, error) {
 	// Convert Swagger hosts to our model
 	hosts := make([]models.Host, len(swaggerHosts))
 	for i, swaggerHost := range swaggerHosts {
+		// Create a map to store all host data
+		hostData := models.JSONB{}
+		
+		// Add all fields from the swagger host to the data map
+		hostDataBytes, err := json.Marshal(swaggerHost)
+		if err != nil {
+			logrus.Warnf("Failed to marshal host data for %s: %v", swaggerHost.Id, err)
+		} else {
+			// Unmarshal into a map to get all fields
+			var hostDataMap map[string]interface{}
+			if err := json.Unmarshal(hostDataBytes, &hostDataMap); err != nil {
+				logrus.Warnf("Failed to unmarshal host data for %s: %v", swaggerHost.Id, err)
+			} else {
+				// Store all fields in the data map
+				hostData = hostDataMap
+			}
+		}
+		
+		// Log the interfaces if present
+		if len(swaggerHost.Interfaces) > 0 {
+			logrus.Debugf("Host %s has %d interfaces", swaggerHost.Name, len(swaggerHost.Interfaces))
+		}
+		
 		hosts[i] = models.Host{
 			ID:                  swaggerHost.Id,
 			Version:             1, // Default to version 1 for new hosts
@@ -283,7 +367,7 @@ func (c *Client) GetHosts() ([]models.Host, error) {
 			IsCurrent:           true,
 			LastModified:        time.Now(),
 			CreatedAt:           time.Now(),
-			Data:                models.JSONB{},
+			Data:                hostData,
 		}
 	}
 

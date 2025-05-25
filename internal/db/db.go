@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"netmaker-sync/internal/config"
 
-	"github.com/jmoiron/sqlx"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 )
 

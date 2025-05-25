@@ -1,0 +1,95 @@
+// package db
+
+// import (
+// 	"netmaker-sync/internal/models"
+// 	"testing"
+
+// 	"github.com/stretchr/testify/assert"
+// 	"github.com/stretchr/testify/require"
+// )
+
+// func TestUpsertNetworkSimplified(t *testing.T) {
+// 	// This test requires a real database connection
+// 	// Skip it if we're not in integration test mode
+// 	if testing.Short() {
+// 		t.Skip("Skipping integration test")
+// 	}
+
+// 	// Create a test database connection
+// 	// This assumes you have a test database configuration
+// 	// You may need to adjust this based on your test setup
+// 	db, err := getTestDB()
+// 	require.NoError(t, err)
+// 	defer db.Close()
+
+// 	// Create a test network
+// 	testNetwork := &models.Network{
+// 		ID:                     "test-network",
+// 		Name:                   "Test Network",
+// 		AddressRange:           "10.0.0.0/24",
+// 		IsDualStack:            false,
+// 		IsIPv4:                 true,
+// 		IsIPv6:                 false,
+// 		IsLocal:                false,
+// 		DefaultAccessControl:   "default",
+// 		DefaultUDPHolePunching: true,
+// 		DefaultMTU:             1500,
+// 		DefaultKeepalive:       25,
+// 		DefaultInterface:       "wg0",
+// 		Data:                   models.JSONB{"test": "data"},
+// 	}
+
+// 	// Test inserting a new network
+// 	err = db.UpsertNetworkSimplified(testNetwork)
+// 	require.NoError(t, err)
+
+// 	// Verify the network was inserted
+// 	var network models.Network
+// 	err = db.Get(&network, "SELECT * FROM networks WHERE id = $1 AND is_current = true", testNetwork.ID)
+// 	require.NoError(t, err)
+// 	assert.Equal(t, testNetwork.Name, network.Name)
+// 	assert.Equal(t, 1, network.Version)
+
+// 	// Test updating the network
+// 	testNetwork.Name = "Updated Test Network"
+// 	err = db.UpsertNetworkSimplified(testNetwork)
+// 	require.NoError(t, err)
+
+// 	// Verify the network was updated
+// 	err = db.Get(&network, "SELECT * FROM networks WHERE id = $1 AND is_current = true", testNetwork.ID)
+// 	require.NoError(t, err)
+// 	assert.Equal(t, "Updated Test Network", network.Name)
+// 	assert.Equal(t, 2, network.Version)
+
+// 	// Test that no update happens if there are no changes
+// 	err = db.UpsertNetworkSimplified(testNetwork)
+// 	require.NoError(t, err)
+
+// 	// Verify the version didn't change
+// 	err = db.Get(&network, "SELECT * FROM networks WHERE id = $1 AND is_current = true", testNetwork.ID)
+// 	require.NoError(t, err)
+// 	assert.Equal(t, 2, network.Version)
+
+// 	// Clean up
+// 	_, err = db.Exec("DELETE FROM networks WHERE id = $1", testNetwork.ID)
+// 	require.NoError(t, err)
+// }
+
+// // Helper function to get a test database connection
+// func getTestDB() (*DB, error) {
+// 	// This is a placeholder - you'll need to implement this based on your test setup
+// 	// It should return a database connection to a test database
+// 	// For example:
+// 	// cfg := &config.DatabaseConfig{
+// 	//    Host:     "localhost",
+// 	//    Port:     5432,
+// 	//    User:     "test",
+// 	//    Password: "test",
+// 	//    Name:     "netmaker_test",
+// 	// }
+// 	// return New(cfg)
+
+// 	// For now, we'll just return nil and an error
+// 	// Replace this with your actual test database setup
+// 	return nil, nil
+// }

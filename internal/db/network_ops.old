@@ -1,0 +1,101 @@
+// // db/network_ops.go
+// package db
+
+// import (
+// 	"fmt"
+// 	"netmaker-sync/internal/models"
+// 	"time"
+
+// 	"github.com/sirupsen/logrus"
+// )
+
+// // UpsertNetworkSimplified is a simplified version of UpsertNetwork that uses the GenericUpsert function
+// func (db *DB) UpsertNetworkSimplified(network *models.Network) error {
+// 	// First, check if the network exists and get the current version
+// 	var currentNetwork models.Network
+// 	err := db.Get(&currentNetwork, `
+// 		SELECT * FROM networks
+// 		WHERE id = $1 AND is_current = true
+// 	`, network.ID)
+
+// 	// Define the functions needed for GenericUpsert
+// 	equalsFn := func(current, new interface{}) bool {
+// 		return networksEqual(current.(models.Network), *(new.(*models.Network)))
+// 	}
+
+// 	getVersionFn := func(record interface{}) int {
+// 		return record.(models.Network).Version
+// 	}
+
+// 	setVersionFn := func(record interface{}, version int) {
+// 		record.(*models.Network).Version = version
+// 	}
+
+// 	setLastModifiedFn := func(record interface{}, t time.Time) {
+// 		record.(*models.Network).LastModified = t
+// 	}
+
+// 	insertFn := func(tx interface{}, record interface{}) error {
+// 		n := record.(*models.Network)
+// 		_, err := tx.(interface{ NamedExec(string, interface{}) (interface{}, error) }).NamedExec(`
+// 			INSERT INTO networks (
+// 				id, version, name, address_range, address_range6, local_range,
+// 				is_dual_stack, is_ipv4, is_ipv6, is_local, default_access_control,
+// 				default_udp_hole_punching, default_ext_client_dns, default_mtu,
+// 				default_keepalive, default_interface, node_limit, is_current,
+// 				last_modified, created_at, data
+// 			) VALUES (
+// 				:id, :version, :name, :address_range, :address_range6, :local_range,
+// 				:is_dual_stack, :is_ipv4, :is_ipv6, :is_local, :default_access_control,
+// 				:default_udp_hole_punching, :default_ext_client_dns, :default_mtu,
+// 				:default_keepalive, :default_interface, :node_limit, true,
+// 				:last_modified, NOW(), :data
+// 			)
+// 		`, map[string]interface{}{
+// 			"id":                        n.ID,
+// 			"version":                   n.Version,
+// 			"name":                      n.Name,
+// 			"address_range":             n.AddressRange,
+// 			"address_range6":            n.AddressRange6,
+// 			"local_range":               n.LocalRange,
+// 			"is_dual_stack":             n.IsDualStack,
+// 			"is_ipv4":                   n.IsIPv4,
+// 			"is_ipv6":                   n.IsIPv6,
+// 			"is_local":                  n.IsLocal,
+// 			"default_access_control":    n.DefaultAccessControl,
+// 			"default_udp_hole_punching": n.DefaultUDPHolePunching,
+// 			"default_ext_client_dns":    n.DefaultExtClientDNS,
+// 			"default_mtu":               n.DefaultMTU,
+// 			"default_keepalive":         n.DefaultKeepalive,
+// 			"default_interface":         n.DefaultInterface,
+// 			"node_limit":                n.NodeLimit,
+// 			"last_modified":             n.LastModified,
+// 			"data":                      n.Data,
+// 		})
+// 		if err != nil {
+// 			return fmt.Errorf("failed to insert network: %w", err)
+// 		}
+// 		return nil
+// 	}
+
+// 	// Use the GenericUpsert function
+// 	_, err = db.GenericUpsert(
+// 		"networks",
+// 		"id",
+// 		network.ID,
+// 		&currentNetwork,
+// 		network,
+// 		equalsFn,
+// 		getVersionFn,
+// 		setVersionFn,
+// 		setLastModifiedFn,
+// 		insertFn,
+// 	)
+
+// 	if err != nil {
+// 		logrus.Errorf("Error upserting network %s: %v", network.ID, err)
+// 		return err
+// 	}
+
+// 	return nil
+// }
