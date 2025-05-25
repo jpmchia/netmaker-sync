@@ -35,19 +35,36 @@ func New(cfg *config.DatabaseConfig) (*DB, error) {
 
 // Initialize creates the necessary tables if they don't exist
 func (db *DB) Initialize() error {
-	// Create the schema_migrations table to track migrations
-	_, err := db.Exec(`
+
+	// Create the schema_migrations table if it doesn't exist
+	if _, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS schema_migrations (
 			version INTEGER PRIMARY KEY,
 			applied_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 		)
-	`)
-	if err != nil {
+	`); err != nil {
 		return fmt.Errorf("failed to create schema_migrations table: %w", err)
 	}
 
-	// Run migrations
-	return db.setupSchema()
+	// Run setup schemma but only if the schema_migrations table is empty
+	var count int
+	if err := db.Get(&count, "SELECT COUNT(*) FROM schema_migrations"); err != nil {
+		return fmt.Errorf("failed to get schema_migrations count: %w", err)
+	}
+
+	// Run setup schemma but only if the schema_migrations table is empty
+	if count == 0 {
+		if err := db.setupSchema(); err != nil {
+			return fmt.Errorf("failed to setup schema: %w", err)
+		}
+	}
+
+	// Run migrations - this will run any pending migrations
+	if err := db.runMigrations(); err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+
+	return nil
 }
 
 // setupSchema sets up the database schema
@@ -63,24 +80,23 @@ func (db *DB) setupSchema() error {
 	// 	DROP TABLE IF EXISTS sync_history CASCADE;
 	// 	DROP TABLE IF EXISTS schema_migrations CASCADE;
 	// `)
-
 	// if err != nil {
 	// 	return fmt.Errorf("failed to drop existing tables: %w", err)
 	// }
 
 	// Create the schema_migrations table
-	_, err = db.Exec(`
-		CREATE TABLE schema_migrations (
-			version INTEGER PRIMARY KEY,
-			applied_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-		)
-	`)
-	if err != nil {
-		return fmt.Errorf("failed to create schema_migrations table: %w", err)
-	}
+	// _, err := db.Exec(`
+	// 	CREATE TABLE schema_migrations (
+	// 		version INTEGER PRIMARY KEY,
+	// 		applied_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+	// 	)
+	// `)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to create schema_migrations table: %w", err)
+	// }
 
 	// Create the networks table
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		CREATE TABLE networks (
 			id TEXT NOT NULL,
 			version INTEGER NOT NULL,
@@ -110,7 +126,7 @@ func (db *DB) setupSchema() error {
 		ALTER TABLE networks ADD CONSTRAINT networks_id_unique UNIQUE (id);
 	`)
 	if err != nil {
-		return fmt.Errorf("failed to create networks table: %w", err)
+		logrus.Errorf("failed to create networks table: %s", err)
 	}
 
 	// Create the nodes table with a unique constraint on id for foreign key references
@@ -135,12 +151,9 @@ func (db *DB) setupSchema() error {
 			PRIMARY KEY (id, version),
 			UNIQUE(network_id, name, version)
 		);
-		
-		-- Add a unique constraint on nodes.id for foreign key references
-		ALTER TABLE nodes ADD CONSTRAINT nodes_id_unique UNIQUE (id);
 	`)
 	if err != nil {
-		return fmt.Errorf("failed to create nodes table: %w", err)
+		logrus.Errorf("failed to create nodes table: %s", err)
 	}
 
 	// Create the ext_clients table
@@ -163,7 +176,7 @@ func (db *DB) setupSchema() error {
 		);
 	`)
 	if err != nil {
-		return fmt.Errorf("failed to create ext_clients table: %w", err)
+		logrus.Errorf("failed to create ext_clients table: %s", err)
 	}
 
 	// Create the dns_entries table
@@ -183,7 +196,7 @@ func (db *DB) setupSchema() error {
 		);
 	`)
 	if err != nil {
-		return fmt.Errorf("failed to create dns_entries table: %w", err)
+		logrus.Errorf("failed to create dns_entries table: %s", err)
 	}
 
 	// Create the hosts table
@@ -206,26 +219,26 @@ func (db *DB) setupSchema() error {
 		);
 	`)
 	if err != nil {
-		return fmt.Errorf("failed to create hosts table: %w", err)
+		logrus.Errorf("failed to create hosts table: %s", err)
 	}
 
 	// Create the acls table with versioning
-	_, err = db.Exec(`
-		CREATE TABLE acls (
-			id INTEGER NOT NULL,
-			version INTEGER NOT NULL,
-			network_id TEXT NOT NULL REFERENCES networks(id) ON DELETE CASCADE,
-			node_id TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
-			is_current BOOLEAN NOT NULL DEFAULT TRUE,
-			data JSONB NOT NULL,
-			last_modified TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-			PRIMARY KEY (id, version)
-		);
-	`)
-	if err != nil {
-		return fmt.Errorf("failed to create acls table: %w", err)
-	}
+	// _, err = db.Exec(`
+	// 	CREATE TABLE acls (
+	// 		id INTEGER NOT NULL,
+	// 		version INTEGER NOT NULL,
+	// 		network_id TEXT NOT NULL REFERENCES networks(id) ON DELETE CASCADE,
+	// 		node_id TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+	// 		is_current BOOLEAN NOT NULL DEFAULT TRUE,
+	// 		data JSONB NOT NULL,
+	// 		last_modified TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+	// 		created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+	// 		PRIMARY KEY (id, version)
+	// 	);
+	// `)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to create acls table: %w", err)
+	// }
 
 	// Create the sync_history table
 	_, err = db.Exec(`
@@ -239,35 +252,44 @@ func (db *DB) setupSchema() error {
 		);
 	`)
 	if err != nil {
-		return fmt.Errorf("failed to create sync_history table: %w", err)
+		logrus.Errorf("failed to create sync_history table: %s", err)
 	}
 
 	// Record that we've applied all migrations
 	_, err = db.Exec(`INSERT INTO schema_migrations (version) VALUES (1)`)
 	if err != nil {
-		return fmt.Errorf("failed to record migration: %w", err)
+		logrus.Errorf("failed to record migration: %s", err)
 	}
 
 	logrus.Info("Database schema setup complete")
 	return nil
 }
 
-// migration represents a database migration
-type migration struct {
-	version int
-	up      string
-	down    string
-}
-
 // runMigrations runs any pending migrations
-func (db *DB) runMigrations(migrations []migration) error {
+func (db *DB) runMigrations() error {
+	migrations := []struct {
+		version int
+		up      string
+	}{
+		// Check the current migration version
+		{
+			version: 1,
+			up: `
+				CREATE TABLE schema_migrations (
+					version INTEGER PRIMARY KEY,
+					applied_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+				)
+			`,
+		},
+	}
+
 	// Check the current migration version
 	var currentVersion int
 	err := db.Get(&currentVersion, `
 		SELECT COALESCE(MAX(version), 0) FROM schema_migrations
 	`)
 	if err != nil {
-		return fmt.Errorf("failed to get current migration version: %w", err)
+		logrus.Errorf("failed to get current migration version: %s", err)
 	}
 
 	// Run migrations that haven't been applied yet
@@ -277,13 +299,13 @@ func (db *DB) runMigrations(migrations []migration) error {
 
 			tx, err := db.Beginx()
 			if err != nil {
-				return fmt.Errorf("failed to begin transaction for migration %d: %w", migration.version, err)
+				logrus.Errorf("failed to begin transaction for migration %d: %s", migration.version, err)
 			}
 
 			_, err = tx.Exec(migration.up)
 			if err != nil {
 				tx.Rollback()
-				return fmt.Errorf("failed to run migration %d: %w", migration.version, err)
+				logrus.Errorf("failed to run migration %d: %s", migration.version, err)
 			}
 
 			_, err = tx.Exec(`
@@ -291,12 +313,12 @@ func (db *DB) runMigrations(migrations []migration) error {
 			`, migration.version)
 			if err != nil {
 				tx.Rollback()
-				return fmt.Errorf("failed to record migration %d: %w", migration.version, err)
+				logrus.Errorf("failed to record migration %d: %s", migration.version, err)
 			}
 
 			err = tx.Commit()
 			if err != nil {
-				return fmt.Errorf("failed to commit migration %d: %w", migration.version, err)
+				logrus.Errorf("failed to commit migration %d: %s", migration.version, err)
 			}
 
 			logrus.Infof("Migration %d completed", migration.version)

@@ -34,7 +34,8 @@ type DatabaseConfig struct {
 
 // SyncConfig holds synchronization specific configuration
 type SyncConfig struct {
-	Interval time.Duration
+	Interval    time.Duration
+	IncludeAcls bool
 }
 
 // APIConfig holds API server specific configuration
@@ -45,7 +46,7 @@ type APIConfig struct {
 
 // LoggingConfig holds logging specific configuration
 type LoggingConfig struct {
-	Level string
+	Level             string
 	DisableRestyDebug bool
 }
 
@@ -61,10 +62,10 @@ func Load() (*Config, error) {
 
 	// Set up viper to handle both YAML config and environment variables
 	// Try to load config file from multiple locations
-	viper.SetConfigName("config") // name of config file (without extension)
-	viper.SetConfigType("yaml")   // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath(".")      // look for config in the working directory
-	viper.AddConfigPath("..")    // look for config in parent directory
+	viper.SetConfigName("config")              // name of config file (without extension)
+	viper.SetConfigType("yaml")                // REQUIRED if the config file does not have the extension in the name
+	viper.AddConfigPath(".")                   // look for config in the working directory
+	viper.AddConfigPath("..")                  // look for config in parent directory
 	viper.AddConfigPath("/etc/netmaker-sync/") // path to look for the config file in
 
 	// Set default values
@@ -116,9 +117,9 @@ func Load() (*Config, error) {
 	}
 
 	// Log the configuration values for debugging
-	logrus.Debugf("Configuration loaded: netmaker_api.url=%s, database.host=%s, database.name=%s", 
-		viper.GetString("netmaker_api.url"), 
-		viper.GetString("database.host"), 
+	logrus.Debugf("Configuration loaded: netmaker_api.url=%s, database.host=%s, database.name=%s",
+		viper.GetString("netmaker_api.url"),
+		viper.GetString("database.host"),
 		viper.GetString("database.name"))
 
 	return &Config{
@@ -134,14 +135,15 @@ func Load() (*Config, error) {
 			Password: viper.GetString("database.password"),
 		},
 		Sync: SyncConfig{
-			Interval: syncInterval,
+			Interval:    syncInterval,
+			IncludeAcls: viper.GetBool("sync.include_acls"),
 		},
 		API: APIConfig{
 			Host: viper.GetString("api.host"),
 			Port: viper.GetInt("api.port"),
 		},
 		Logging: LoggingConfig{
-			Level: viper.GetString("logging.level"),
+			Level:             viper.GetString("logging.level"),
 			DisableRestyDebug: viper.GetBool("logging.disable_resty_debug"),
 		},
 	}, nil

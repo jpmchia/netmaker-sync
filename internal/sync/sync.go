@@ -31,7 +31,7 @@ func New(apiClient *api.Client, db *db.DB) *Service {
 }
 
 // SyncAll syncs all resources from Netmaker API to the database
-func (s *Service) SyncAll(ctx context.Context) error {
+func (s *Service) SyncAll(ctx context.Context, includeAcls bool) error {
 	// Start with networks
 	if err := s.SyncNetworks(ctx); err != nil {
 		return err
@@ -57,8 +57,10 @@ func (s *Service) SyncAll(ctx context.Context) error {
 			logrus.Errorf("Failed to sync DNS entries for network %s: %v", network.ID, err)
 		}
 
-		if err := s.SyncACLs(ctx, network.ID); err != nil {
-			logrus.Errorf("Failed to sync ACLs for network %s: %v", network.ID, err)
+		if includeAcls {
+			if err := s.SyncACLs(ctx, network.ID); err != nil {
+				logrus.Errorf("Failed to sync ACLs for network %s: %v", network.ID, err)
+			}
 		}
 	}
 
@@ -75,8 +77,8 @@ func (s *Service) SyncNetworks(ctx context.Context) error {
 	// Record sync start
 	syncHistory := &models.SyncHistory{
 		ResourceType: models.ResourceTypeNetwork,
-		Status:      models.SyncStatusPending,
-		StartedAt:   time.Now(),
+		Status:       models.SyncStatusPending,
+		StartedAt:    time.Now(),
 	}
 	if err := s.db.CreateSyncHistory(syncHistory); err != nil {
 		return err
@@ -111,8 +113,8 @@ func (s *Service) SyncNodes(ctx context.Context, networkID string) error {
 	// Record sync start
 	syncHistory := &models.SyncHistory{
 		ResourceType: models.ResourceTypeNode,
-		Status:      models.SyncStatusPending,
-		StartedAt:   time.Now(),
+		Status:       models.SyncStatusPending,
+		StartedAt:    time.Now(),
 	}
 	if err := s.db.CreateSyncHistory(syncHistory); err != nil {
 		return err
@@ -147,8 +149,8 @@ func (s *Service) SyncExtClients(ctx context.Context, networkID string) error {
 	// Record sync start
 	syncHistory := &models.SyncHistory{
 		ResourceType: models.ResourceTypeExtClient,
-		Status:      models.SyncStatusPending,
-		StartedAt:   time.Now(),
+		Status:       models.SyncStatusPending,
+		StartedAt:    time.Now(),
 	}
 	if err := s.db.CreateSyncHistory(syncHistory); err != nil {
 		return err
@@ -183,8 +185,8 @@ func (s *Service) SyncDNSEntries(ctx context.Context, networkID string) error {
 	// Record sync start
 	syncHistory := &models.SyncHistory{
 		ResourceType: models.ResourceTypeDNS,
-		Status:      models.SyncStatusPending,
-		StartedAt:   time.Now(),
+		Status:       models.SyncStatusPending,
+		StartedAt:    time.Now(),
 	}
 	if err := s.db.CreateSyncHistory(syncHistory); err != nil {
 		return err
@@ -219,8 +221,8 @@ func (s *Service) SyncACLs(ctx context.Context, networkID string) error {
 	// Record sync start
 	syncHistory := &models.SyncHistory{
 		ResourceType: models.ResourceTypeACL,
-		Status:      models.SyncStatusPending,
-		StartedAt:   time.Now(),
+		Status:       models.SyncStatusPending,
+		StartedAt:    time.Now(),
 	}
 	if err := s.db.CreateSyncHistory(syncHistory); err != nil {
 		return err
@@ -253,8 +255,8 @@ func (s *Service) SyncHosts(ctx context.Context) error {
 	// Record sync start
 	syncHistory := &models.SyncHistory{
 		ResourceType: models.ResourceTypeHost,
-		Status:      models.SyncStatusPending,
-		StartedAt:   time.Now(),
+		Status:       models.SyncStatusPending,
+		StartedAt:    time.Now(),
 	}
 	if err := s.db.CreateSyncHistory(syncHistory); err != nil {
 		return err

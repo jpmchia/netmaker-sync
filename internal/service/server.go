@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"netmaker-sync/internal/config"
 	"netmaker-sync/internal/sync"
 
 	"github.com/go-chi/chi/v5"
@@ -16,13 +17,15 @@ import (
 type Server struct {
 	router      *chi.Mux
 	syncService *sync.Service
+	cfg         *config.Config
 }
 
 // New creates a new HTTP API server
-func New(syncService *sync.Service) *Server {
+func New(syncService *sync.Service, cfg *config.Config) *Server {
 	s := &Server{
 		router:      chi.NewRouter(),
 		syncService: syncService,
+		cfg:         cfg,
 	}
 
 	s.setupRoutes()
@@ -72,7 +75,10 @@ func (s *Server) Start(host string, port int) error {
 
 // handleSyncAll handles a request to sync all resources
 func (s *Server) handleSyncAll(w http.ResponseWriter, r *http.Request) {
-	err := s.syncService.SyncAll(r.Context())
+
+	// We need to get the value from config
+	includeAcls := s.cfg.Sync.IncludeAcls
+	err := s.syncService.SyncAll(r.Context(), includeAcls)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -80,7 +86,7 @@ func (s *Server) handleSyncAll(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"success","message":"Sync completed successfully"}`)) 
+	w.Write([]byte(`{"status":"success","message":"Sync completed successfully"}`))
 }
 
 // handleSyncNetworks handles a request to sync networks
@@ -93,7 +99,7 @@ func (s *Server) handleSyncNetworks(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"success","message":"Networks sync completed successfully"}`)) 
+	w.Write([]byte(`{"status":"success","message":"Networks sync completed successfully"}`))
 }
 
 // handleSyncNodes handles a request to sync nodes for a specific network
@@ -112,7 +118,7 @@ func (s *Server) handleSyncNodes(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"success","message":"Nodes sync completed successfully"}`)) 
+	w.Write([]byte(`{"status":"success","message":"Nodes sync completed successfully"}`))
 }
 
 // handleGetNetworks handles a request to get all networks

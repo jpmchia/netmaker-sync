@@ -45,7 +45,7 @@ func main() {
 	logrus.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp: true,
 	})
-	
+
 	// Default to info level until we load the config
 	logrus.SetLevel(logrus.InfoLevel)
 
@@ -64,7 +64,7 @@ func main() {
 
 func serveCmd() *cobra.Command {
 	var logLevel string
-	
+
 	cmd := &cobra.Command{
 		Use:   "serve",
 		Short: "Start the Netmaker sync daemon",
@@ -74,7 +74,7 @@ func serveCmd() *cobra.Command {
 			if err != nil {
 				logrus.Fatal(err)
 			}
-			
+
 			// Set log level from config if not overridden by flag
 			if !cmd.Flags().Changed("log-level") {
 				logLevel = cfg.Logging.Level
@@ -98,12 +98,12 @@ func serveCmd() *cobra.Command {
 			syncService := sync.New(apiClient, database)
 
 			// Initialize HTTP server
-			server := service.New(syncService)
+			server := service.New(syncService, cfg)
 
 			// Initialize cron scheduler
 			c := cron.New()
 			_, err = c.AddFunc("@every "+cfg.Sync.Interval.String(), func() {
-				if err := syncService.SyncAll(context.Background()); err != nil {
+				if err := syncService.SyncAll(context.Background(), cfg.Sync.IncludeAcls); err != nil {
 					logrus.Errorf("Scheduled sync failed: %v", err)
 				}
 			})
