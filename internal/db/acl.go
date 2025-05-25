@@ -128,56 +128,56 @@ func (db *DB) UpsertACLs(networkID string, aclsMap map[string]map[string]int) er
 		return fmt.Errorf("failed to get next ACL ID: %w", err)
 	}
 
+	// Get all nodes for this network to check if they exist
+	var nodes []models.Node
+	err = db.Select(&nodes, `
+		SELECT id, name FROM nodes 
+		WHERE network_id = $1 AND is_current = true
+	`, networkID)
+	if err != nil {
+		return fmt.Errorf("failed to get nodes for network: %w", err)
+	}
+
+	// Create a map of node names to node IDs for quick lookup
+	nodeMap := make(map[string]string)
+	for _, node := range nodes {
+		nodeMap[node.Name] = node.ID
+	}
+
 	// Process each ACL from the map
 	successCount := 0
 	failureCount := 0
 	for sourceNode, destMap := range aclsMap {
+		// Check if the source node exists in our database
+		sourceID, exists := nodeMap[sourceNode]
+		if !exists {
+			logrus.Warnf("Source node '%s' not found in database, skipping ACLs", sourceNode)
+			failureCount += len(destMap)
+			continue
+		}
+
 		for destNode, allowed := range destMap {
-			// Store the ACL data in JSONB
-			aclData := models.JSONB{
-				"source_node": sourceNode,
-				"dest_node":   destNode,
-				"is_allowed":  allowed == 1,
+			// Create a new ACL object using the node ID instead of the node name
+			acl := &models.ACL{
+				ID:        nextID,
+				NetworkID: networkID,
+				NodeID:    sourceID, // Use the actual node ID from the database
+				Data: models.JSONB{
+					"source_node": sourceNode,
+					"dest_node":   destNode,
+					"is_allowed":  allowed == 1,
+				},
 			}
 
-			// Insert a new ACL with individual transaction
-			tx, err := db.Beginx()
+			// Use the UpsertACL function which now uses the generic approach
+			err := db.UpsertACL(acl)
 			if err != nil {
-				logrus.Warnf("Failed to begin transaction for ACL %s->%s: %v", sourceNode, destNode, err)
+				logrus.Warnf("Failed to upsert ACL for source %s and dest %s: %v", sourceNode, destNode, err)
 				failureCount++
 				continue
 			}
 
-			_, err = tx.NamedExec(`
-				INSERT INTO acls (
-					id, version, network_id, node_id, is_current, 
-					last_modified, created_at, data
-				) VALUES (
-					:id, 1, :network_id, :node_id, true, 
-					:last_modified, NOW(), :data
-				)
-			`, map[string]interface{}{
-				"id":            nextID,
-				"network_id":    networkID,
-				"node_id":       sourceNode,
-				"last_modified": time.Now(),
-				"data":          aclData,
-			})
-
-			if err != nil {
-				tx.Rollback()
-				logrus.Warnf("Failed to insert ACL for source %s and dest %s: %v", sourceNode, destNode, err)
-				failureCount++
-				continue
-			}
-
-			err = tx.Commit()
-			if err != nil {
-				logrus.Warnf("Failed to commit transaction for ACL %s->%s: %v", sourceNode, destNode, err)
-				failureCount++
-				continue
-			}
-
+			logrus.Infof("Created new record in acls with id = %d", nextID)
 			// Increment the ID for the next ACL
 			nextID++
 			successCount++
