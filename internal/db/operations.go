@@ -8,6 +8,8 @@ import (
 	"netmaker-sync/internal/models"
 	"reflect"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 func (db *DB) UpsertNetwork(network *models.Network) error {
@@ -976,38 +978,23 @@ func (db *DB) GetACLHistory(aclID int) ([]models.ACL, error) {
 }
 
 func (db *DB) UpsertACLs(networkID string, aclsMap map[string]map[string]int) error {
-	// Start a transaction
-	tx, err := db.Beginx()
+	// First, delete all existing ACLs for this network without a transaction
+	// This is safer than trying to do everything in a single transaction
+	_, err := db.Exec(`DELETE FROM acls WHERE network_id = $1`, networkID)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-	defer tx.Rollback()
-
-	// Get existing ACLs for this network to avoid ID conflicts
-	existingACLs := make(map[string]int) // Map of source_node-dest_node to ACL ID
-	var existingACLsList []models.ACL
-	err = tx.Select(&existingACLsList, `
-		SELECT * FROM acls 
-		WHERE network_id = $1 AND is_current = true
-	`, networkID)
-
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return fmt.Errorf("failed to get existing ACLs: %w", err)
+		return fmt.Errorf("failed to delete existing ACLs: %w", err)
 	}
 
-	// Build a map of existing ACLs by source and dest nodes
-	for _, acl := range existingACLsList {
-		if acl.Data != nil {
-			sourceNode, _ := acl.Data["source_node"].(string)
-			destNode, _ := acl.Data["dest_node"].(string)
-			if sourceNode != "" && destNode != "" {
-				key := sourceNode + "-" + destNode
-				existingACLs[key] = acl.ID
-			}
-		}
+	// Get the next ID to use for new ACLs
+	var nextID int
+	err = db.Get(&nextID, `SELECT COALESCE(MAX(id), 0) + 1 FROM acls`)
+	if err != nil {
+		return fmt.Errorf("failed to get next ACL ID: %w", err)
 	}
 
 	// Process each ACL from the map
+	successCount := 0
+	failureCount := 0
 	for sourceNode, destMap := range aclsMap {
 		for destNode, allowed := range destMap {
 			// Store the ACL data in JSONB
@@ -1017,104 +1004,52 @@ func (db *DB) UpsertACLs(networkID string, aclsMap map[string]map[string]int) er
 				"is_allowed":  allowed == 1,
 			}
 
-			// Check if this ACL already exists
-			key := sourceNode + "-" + destNode
-			aclID, exists := existingACLs[key]
-
-			if exists {
-				// Get the current ACL data
-				var currentACL models.ACL
-				err = tx.Get(&currentACL, `
-					SELECT * FROM acls 
-					WHERE id = $1 AND is_current = true
-				`, aclID)
-
-				if err != nil {
-					return fmt.Errorf("failed to get current ACL: %w", err)
-				}
-
-				// Check if there are meaningful changes
-				isAllowed, _ := currentACL.Data["is_allowed"].(bool)
-				if (allowed == 1) == isAllowed {
-					// No changes, nothing to do for this ACL
-					continue
-				}
-
-				// Set the current version to not current
-				_, err = tx.Exec(`
-					UPDATE acls 
-					SET is_current = false 
-					WHERE id = $1 AND is_current = true
-				`, aclID)
-
-				if err != nil {
-					return fmt.Errorf("failed to update current ACL: %w", err)
-				}
-
-				// Get the next version number
-				var nextVersion int
-				err = tx.Get(&nextVersion, `
-					SELECT COALESCE(MAX(version), 0) + 1 FROM acls WHERE id = $1
-				`, aclID)
-
-				if err != nil {
-					return fmt.Errorf("failed to get next version: %w", err)
-				}
-
-				// Insert the new version
-				_, err = tx.NamedExec(`
-					INSERT INTO acls (
-						id, version, network_id, node_id, is_current, 
-						last_modified, created_at, data
-					) VALUES (
-						:id, :version, :network_id, :node_id, true, 
-						:last_modified, NOW(), :data
-					)
-				`, map[string]interface{}{
-					"id":            aclID,
-					"version":       nextVersion,
-					"network_id":    networkID,
-					"node_id":       sourceNode,
-					"last_modified": time.Now(),
-					"data":          aclData,
-				})
-
-				if err != nil {
-					return fmt.Errorf("failed to insert new ACL version: %w", err)
-				}
-			} else {
-				// First version of this ACL - get a new ID
-				var newID int
-				err = tx.Get(&newID, `SELECT COALESCE(MAX(id), 0) + 1 FROM acls`)
-				if err != nil {
-					return fmt.Errorf("failed to get new ACL ID: %w", err)
-				}
-
-				// Insert the new ACL
-				_, err = tx.NamedExec(`
-					INSERT INTO acls (
-						id, version, network_id, node_id, is_current, 
-						last_modified, created_at, data
-					) VALUES (
-						:id, 1, :network_id, :node_id, true, 
-						:last_modified, NOW(), :data
-					)
-				`, map[string]interface{}{
-					"id":            newID,
-					"network_id":    networkID,
-					"node_id":       sourceNode,
-					"last_modified": time.Now(),
-					"data":          aclData,
-				})
-
-				if err != nil {
-					return fmt.Errorf("failed to insert first ACL version: %w", err)
-				}
+			// Insert a new ACL with individual transaction
+			tx, err := db.Beginx()
+			if err != nil {
+				logrus.Warnf("Failed to begin transaction for ACL %s->%s: %v", sourceNode, destNode, err)
+				failureCount++
+				continue
 			}
+
+			_, err = tx.NamedExec(`
+				INSERT INTO acls (
+					id, version, network_id, node_id, is_current, 
+					last_modified, created_at, data
+				) VALUES (
+					:id, 1, :network_id, :node_id, true, 
+					:last_modified, NOW(), :data
+				)
+			`, map[string]interface{}{
+				"id":            nextID,
+				"network_id":    networkID,
+				"node_id":       sourceNode,
+				"last_modified": time.Now(),
+				"data":          aclData,
+			})
+
+			if err != nil {
+				tx.Rollback()
+				logrus.Warnf("Failed to insert ACL for source %s and dest %s: %v", sourceNode, destNode, err)
+				failureCount++
+				continue
+			}
+
+			err = tx.Commit()
+			if err != nil {
+				logrus.Warnf("Failed to commit transaction for ACL %s->%s: %v", sourceNode, destNode, err)
+				failureCount++
+				continue
+			}
+
+			// Increment the ID for the next ACL
+			nextID++
+			successCount++
 		}
 	}
 
-	return tx.Commit()
+	logrus.Infof("Inserted %d ACLs for network %s (failed: %d)", successCount, networkID, failureCount)
+	return nil
 }
 
 func (db *DB) CreateSyncHistory(syncHistory *models.SyncHistory) error {

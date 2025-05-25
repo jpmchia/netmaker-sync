@@ -1,5 +1,6 @@
 netmaker-sync
 git_push.sh
+config.yaml
 
 .env
 

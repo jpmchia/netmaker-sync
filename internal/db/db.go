@@ -134,6 +134,18 @@ func (db *DB) runMigrations() error {
 		{
 			version: 4,
 			up: `
+				-- Add a unique constraint on networks.id to support foreign key references
+				DO $$
+				BEGIN
+					IF NOT EXISTS (
+						SELECT 1 FROM pg_constraint 
+						WHERE conname = 'networks_id_unique' AND conrelid = 'networks'::regclass
+					) THEN
+						ALTER TABLE networks ADD CONSTRAINT networks_id_unique UNIQUE (id);
+					END IF;
+				END
+				$$;
+				
 				CREATE TABLE IF NOT EXISTS dns_entries (
 					id SERIAL PRIMARY KEY,
 					network_id TEXT NOT NULL REFERENCES networks(id) ON DELETE CASCADE,
@@ -170,6 +182,18 @@ func (db *DB) runMigrations() error {
 		{
 			version: 6,
 			up: `
+				-- Add a unique constraint on nodes.id to support foreign key references
+				DO $$
+				BEGIN
+					IF NOT EXISTS (
+						SELECT 1 FROM pg_constraint 
+						WHERE conname = 'nodes_id_unique' AND conrelid = 'nodes'::regclass
+					) THEN
+						ALTER TABLE nodes ADD CONSTRAINT nodes_id_unique UNIQUE (id);
+					END IF;
+				END
+				$$;
+				
 				CREATE TABLE IF NOT EXISTS acls (
 					id SERIAL PRIMARY KEY,
 					network_id TEXT NOT NULL REFERENCES networks(id) ON DELETE CASCADE,
@@ -192,6 +216,32 @@ func (db *DB) runMigrations() error {
 					started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 					completed_at TIMESTAMP WITH TIME ZONE
 				)
+			`,
+		},
+		{
+			version: 8,
+			up: `
+				-- Add version and is_current columns to the acls table
+				ALTER TABLE acls ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1;
+				ALTER TABLE acls ADD COLUMN IF NOT EXISTS is_current BOOLEAN NOT NULL DEFAULT TRUE;
+				-- Update the primary key to include version
+				ALTER TABLE acls DROP CONSTRAINT IF EXISTS acls_pkey;
+				ALTER TABLE acls ADD PRIMARY KEY (id, version);
+			`,
+		},
+		{
+			version: 9,
+			up: `
+				-- Drop all unique constraints on the acls table except for the primary key
+				ALTER TABLE acls DROP CONSTRAINT IF EXISTS acls_network_id_node_id_key;
+				ALTER TABLE acls DROP CONSTRAINT IF EXISTS acls_network_id_node_id_version_key;
+			`,
+		},
+		{
+			version: 10,
+			up: `
+				-- Truncate the acls table to start fresh
+				TRUNCATE TABLE acls;
 			`,
 		},
 	}

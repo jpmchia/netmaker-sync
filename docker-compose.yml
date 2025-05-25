@@ -20,6 +20,7 @@ services:
       - SYNC_INTERVAL=${SYNC_INTERVAL:-5m}
       - API_PORT=8080
       - API_HOST=0.0.0.0
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       - db
     volumes:

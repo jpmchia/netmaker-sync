@@ -4,7 +4,7 @@ A daemon service that efficiently syncs data from the Netmaker API to a PostgreS
 
 ## Overview
 
-NetmakerSync is designed to maintain a synchronized copy of Netmaker network data in a PostgreSQL database. It implements an efficient change-based versioning system that only stores meaningful changes while maintaining a complete history of all resources. This approach optimizes storage and provides valuable historical data for analysis and auditing.
+NetmakerSync is designed to maintain a synchronised copy of Netmaker network data in a PostgreSQL database. It implements an efficient change-based versioning system that only stores meaningful changes while maintaining a complete history of all resources. This approach optimises storage and provides valuable historical data for analysis and auditing.
 
 ## Features
 

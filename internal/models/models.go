@@ -36,6 +36,7 @@ func (j *JSONB) Scan(value interface{}) error {
 // Network represents a Netmaker network
 type Network struct {
 	ID                     string    `json:"id" db:"id"`
+	Version                int       `json:"version" db:"version"`
 	Name                   string    `json:"name" db:"name"`
 	AddressRange           string    `json:"addressrange" db:"address_range"`
 	AddressRange6          string    `json:"addressrange6" db:"address_range6"`
@@ -51,6 +52,7 @@ type Network struct {
 	DefaultKeepalive       int       `json:"defaultkeepalive" db:"default_keepalive"`
 	DefaultInterface       string    `json:"defaultinterface" db:"default_interface"`
 	NodeLimit              int       `json:"nodelimit" db:"node_limit"`
+	IsCurrent              bool      `json:"is_current" db:"is_current"`
 	LastModified           time.Time `json:"lastmodified" db:"last_modified"`
 	CreatedAt              time.Time `json:"created_at" db:"created_at"`
 	Data                   JSONB     `json:"data" db:"data"`
@@ -59,6 +61,7 @@ type Network struct {
 // Node represents a Netmaker node
 type Node struct {
 	ID               string    `json:"id" db:"id"`
+	Version          int       `json:"version" db:"version"`
 	NetworkID        string    `json:"network" db:"network_id"`
 	Name             string    `json:"name" db:"name"`
 	Address          string    `json:"address" db:"address"`
@@ -69,6 +72,7 @@ type Node struct {
 	IsIngressGateway bool      `json:"isingressgateway" db:"is_ingress_gateway"`
 	IsRelay          bool      `json:"isrelay" db:"is_relay"`
 	Connected        bool      `json:"connected" db:"connected"`
+	IsCurrent        bool      `json:"is_current" db:"is_current"`
 	LastModified     time.Time `json:"lastmodified" db:"last_modified"`
 	CreatedAt        time.Time `json:"created_at" db:"created_at"`
 	Data             JSONB     `json:"data" db:"data"`
@@ -77,12 +81,14 @@ type Node struct {
 // ExtClient represents a Netmaker external client
 type ExtClient struct {
 	ID           string    `json:"clientid" db:"id"`
+	Version      int       `json:"version" db:"version"`
 	NetworkID    string    `json:"network" db:"network_id"`
 	Name         string    `json:"name" db:"name"`
 	Address      string    `json:"address" db:"address"`
 	Address6     string    `json:"address6" db:"address6"`
 	PublicKey    string    `json:"publickey" db:"public_key"`
 	Enabled      bool      `json:"enabled" db:"enabled"`
+	IsCurrent    bool      `json:"is_current" db:"is_current"`
 	LastModified time.Time `json:"lastmodified" db:"last_modified"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	Data         JSONB     `json:"data" db:"data"`
@@ -102,6 +108,7 @@ type DNSEntry struct {
 // Host represents a Netmaker host
 type Host struct {
 	ID                  string    `json:"id" db:"id"`
+	Version             int       `json:"version" db:"version"`
 	Name                string    `json:"name" db:"name"`
 	EndpointIP          string    `json:"endpointip" db:"endpoint_ip"`
 	EndpointIPv6        string    `json:"endpointipv6" db:"endpoint_ipv6"`
@@ -109,6 +116,7 @@ type Host struct {
 	ListenPort          int       `json:"listenport" db:"listen_port"`
 	MTU                 int       `json:"mtu" db:"mtu"`
 	PersistentKeepalive int       `json:"persistentkeepalive" db:"persistent_keepalive"`
+	IsCurrent           bool      `json:"is_current" db:"is_current"`
 	LastModified        time.Time `json:"lastmodified" db:"last_modified"`
 	CreatedAt           time.Time `json:"created_at" db:"created_at"`
 	Data                JSONB     `json:"data" db:"data"`
@@ -117,8 +125,10 @@ type Host struct {
 // ACL represents a Netmaker ACL
 type ACL struct {
 	ID           int       `json:"id" db:"id"`
+	Version      int       `json:"version" db:"version"`
 	NetworkID    string    `json:"network" db:"network_id"`
 	NodeID       string    `json:"nodeid" db:"node_id"`
+	IsCurrent    bool      `json:"is_current" db:"is_current"`
 	Data         JSONB     `json:"data" db:"data"`
 	LastModified time.Time `json:"lastmodified" db:"last_modified"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`

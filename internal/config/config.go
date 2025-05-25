@@ -14,6 +14,7 @@ type Config struct {
 	Database    DatabaseConfig
 	Sync        SyncConfig
 	API         APIConfig
+	Logging     LoggingConfig
 }
 
 // NetmakerAPIConfig holds Netmaker API specific configuration
@@ -42,48 +43,106 @@ type APIConfig struct {
 	Port int
 }
 
-// Load loads the configuration from environment variables
+// LoggingConfig holds logging specific configuration
+type LoggingConfig struct {
+	Level string
+	DisableRestyDebug bool
+}
+
+// Load loads the configuration from environment variables and config file
 func Load() (*Config, error) {
 	// Load .env file if it exists
-	_ = godotenv.Load()
+	envErr := godotenv.Load()
+	if envErr != nil {
+		logrus.Infof(".env file not loaded: %v", envErr)
+	} else {
+		logrus.Info(".env file loaded successfully")
+	}
 
-	viper.SetDefault("NETMAKER_API_URL", "https://api.netmaker.example.com")
-	viper.SetDefault("NETMAKER_API_KEY", "")
-	viper.SetDefault("DB_HOST", "localhost")
-	viper.SetDefault("DB_PORT", 5432)
-	viper.SetDefault("DB_NAME", "netmaker_sync")
-	viper.SetDefault("DB_USER", "postgres")
-	viper.SetDefault("DB_PASSWORD", "postgres")
-	viper.SetDefault("SYNC_INTERVAL", "5m")
-	viper.SetDefault("API_HOST", "0.0.0.0")
-	viper.SetDefault("API_PORT", 8080)
+	// Set up viper to handle both YAML config and environment variables
+	// Try to load config file from multiple locations
+	viper.SetConfigName("config") // name of config file (without extension)
+	viper.SetConfigType("yaml")   // REQUIRED if the config file does not have the extension in the name
+	viper.AddConfigPath(".")      // look for config in the working directory
+	viper.AddConfigPath("..")    // look for config in parent directory
+	viper.AddConfigPath("/etc/netmaker-sync/") // path to look for the config file in
 
+	// Set default values
+	viper.SetDefault("netmaker_api.url", "https://api.netmaker.example.com")
+	viper.SetDefault("netmaker_api.key", "")
+	viper.SetDefault("database.host", "localhost")
+	viper.SetDefault("database.port", 5432)
+	viper.SetDefault("database.name", "netmaker_sync")
+	viper.SetDefault("database.user", "postgres")
+	viper.SetDefault("database.password", "postgres")
+	viper.SetDefault("sync.interval", "5m")
+	viper.SetDefault("api.host", "0.0.0.0")
+	viper.SetDefault("api.port", 8080)
+	viper.SetDefault("logging.level", "info")
+	viper.SetDefault("logging.disable_resty_debug", true)
+
+	// Map environment variables to viper keys
+	viper.BindEnv("netmaker_api.url", "NETMAKER_API_URL")
+	viper.BindEnv("netmaker_api.key", "NETMAKER_API_KEY")
+	viper.BindEnv("database.host", "DB_HOST")
+	viper.BindEnv("database.port", "DB_PORT")
+	viper.BindEnv("database.name", "DB_NAME")
+	viper.BindEnv("database.user", "DB_USER")
+	viper.BindEnv("database.password", "DB_PASSWORD")
+	viper.BindEnv("sync.interval", "SYNC_INTERVAL")
+	viper.BindEnv("api.host", "API_HOST")
+	viper.BindEnv("api.port", "API_PORT")
+	viper.BindEnv("logging.level", "LOG_LEVEL")
+	viper.BindEnv("logging.disable_resty_debug", "DISABLE_RESTY_DEBUG")
+
+	// Enable environment variables
 	viper.AutomaticEnv()
 
-	syncInterval, err := time.ParseDuration(viper.GetString("SYNC_INTERVAL"))
+	// Try to read the config file
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			logrus.Info("No config file found, using environment variables and defaults")
+		} else {
+			logrus.Warnf("Error reading config file: %v", err)
+		}
+	} else {
+		logrus.Infof("Using config file: %s", viper.ConfigFileUsed())
+	}
+
+	syncInterval, err := time.ParseDuration(viper.GetString("sync.interval"))
 	if err != nil {
-		logrus.Warnf("Invalid SYNC_INTERVAL: %s, using default 5m", viper.GetString("SYNC_INTERVAL"))
+		logrus.Warnf("Invalid sync.interval: %s, using default 5m", viper.GetString("sync.interval"))
 		syncInterval = 5 * time.Minute
 	}
 
+	// Log the configuration values for debugging
+	logrus.Debugf("Configuration loaded: netmaker_api.url=%s, database.host=%s, database.name=%s", 
+		viper.GetString("netmaker_api.url"), 
+		viper.GetString("database.host"), 
+		viper.GetString("database.name"))
+
 	return &Config{
 		NetmakerAPI: NetmakerAPIConfig{
-			URL: viper.GetString("NETMAKER_API_URL"),
-			Key: viper.GetString("NETMAKER_API_KEY"),
+			URL: viper.GetString("netmaker_api.url"),
+			Key: viper.GetString("netmaker_api.key"),
 		},
 		Database: DatabaseConfig{
-			Host:     viper.GetString("DB_HOST"),
-			Port:     viper.GetInt("DB_PORT"),
-			Name:     viper.GetString("DB_NAME"),
-			User:     viper.GetString("DB_USER"),
-			Password: viper.GetString("DB_PASSWORD"),
+			Host:     viper.GetString("database.host"),
+			Port:     viper.GetInt("database.port"),
+			Name:     viper.GetString("database.name"),
+			User:     viper.GetString("database.user"),
+			Password: viper.GetString("database.password"),
 		},
 		Sync: SyncConfig{
 			Interval: syncInterval,
 		},
 		API: APIConfig{
-			Host: viper.GetString("API_HOST"),
-			Port: viper.GetInt("API_PORT"),
+			Host: viper.GetString("api.host"),
+			Port: viper.GetInt("api.port"),
+		},
+		Logging: LoggingConfig{
+			Level: viper.GetString("logging.level"),
+			DisableRestyDebug: viper.GetBool("logging.disable_resty_debug"),
 		},
 	}, nil
 }
