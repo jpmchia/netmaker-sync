@@ -12,8 +12,8 @@ services:
     environment:
       - NETMAKER_API_URL=${NETMAKER_API_URL}
       - NETMAKER_API_KEY=${NETMAKER_API_KEY}
-      - DB_HOST=db
-      - DB_PORT=5432
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-5432}
       - DB_NAME=${DB_NAME:-netmaker_sync}
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
